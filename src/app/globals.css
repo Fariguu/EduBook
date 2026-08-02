@@ -1,17 +1,54 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #0f172a; /* Slate 900 for premium typography */
+:root,
+[data-theme="light"] {
+  --background: #fbfff0;
+  --foreground: #02270a;
+  --primary: #238626;
+  --primary-foreground: #fbfff0;
+  --secondary: #687c50;
+  --secondary-foreground: #fbfff0;
+  --accent: #492908;
+  --accent-foreground: #fbfff0;
+  --muted: #e4ebd2;
+  --muted-foreground: #687c50;
+  --border: #d4e0bb;
+}
+
+[data-theme="dark"],
+.dark {
+  --background: #0b0f00;
+  --foreground: #d8fde0;
+  --primary: #79dc7d;
+  --primary-foreground: #0b0f00;
+  --secondary: #9baf83;
+  --secondary-foreground: #0b0f00;
+  --accent: #f7d6b6;
+  --accent-foreground: #0b0f00;
+  --muted: #172205;
+  --muted-foreground: #9baf83;
+  --border: #22330a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }

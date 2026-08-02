@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "EduBook - Prenotazione Lezioni Private",
-  description: "Gestione lezioni private e prenotazioni",
+  description: "Piattaforma per la gestione e prenotazione di lezioni private",
 };
 
 export default function RootLayout({
@@ -20,9 +21,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
-        <Toaster position="bottom-right" closeButton richColors />
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
+        <ThemeProvider
+          attribute="data-theme"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster position="bottom-right" closeButton richColors />
+        </ThemeProvider>
       </body>
     </html>
   );
