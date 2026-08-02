@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthModal } from "@/features/auth/components/AuthModal";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,6 +31,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Suspense fallback={null}>
+            <AuthModal />
+          </Suspense>
           <Toaster position="bottom-right" closeButton richColors />
         </ThemeProvider>
       </body>
