@@ -16,18 +16,18 @@ import {
   UserIcon,
   MailIcon,
   Trash2Icon,
-  CheckIcon,
   CalendarPlusIcon,
   Loader2Icon,
   InboxIcon,
 } from "lucide-react";
 import type { DashboardData, DashboardLesson } from "../types/dashboard.types";
-import { confirmLesson, removeAvailableSlot } from "../actions/dashboard.actions";
+import { removeAvailableSlot } from "../actions/dashboard.actions";
 import { deleteContactMessage } from "@/features/contact/actions/contact.actions";
 import { CreateSlotDialog } from "./CreateSlotDialog";
 import { EditLessonDialog } from "./EditLessonDialog";
 import { RejectLessonDialog } from "./RejectLessonDialog";
 import { CancelLessonDialog } from "./CancelLessonDialog";
+import { ConfirmLessonDialog } from "./ConfirmLessonDialog";
 import { LessonCardItem } from "./LessonCardItem";
 
 interface LessonTabsProps {
@@ -36,23 +36,6 @@ interface LessonTabsProps {
 
 export function LessonTabs({ data }: LessonTabsProps) {
   const [loadingActionId, setLoadingActionId] = React.useState<string | null>(null);
-
-  const handleConfirm = async (lessonId: string) => {
-    setLoadingActionId(lessonId);
-    try {
-      const res = await confirmLesson(lessonId);
-      if (!res.success) {
-        toast.error(res.error || "Impossibile confermare la lezione.");
-      } else {
-        toast.success("Lezione confermata ed email inviata allo studente!");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Si è verificato un errore inatteso.");
-    } finally {
-      setLoadingActionId(null);
-    }
-  };
 
   const handleRemoveSlot = async (slotId: string) => {
     if (!confirm("Sei sicuro di voler eliminare questo slot di disponibilità?")) return;
@@ -212,8 +195,6 @@ export function LessonTabs({ data }: LessonTabsProps) {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {data.pendingLessons.map((lesson) => {
-              const isProcessing = loadingActionId === lesson.id;
-
               return (
                 <LessonCardItem
                   key={lesson.id}
@@ -231,24 +212,13 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         guestEmail={lesson.guest_email}
                       />
                       <EditLessonDialog lesson={lesson} />
-                      <Button
-                        size="sm"
-                        onClick={() => handleConfirm(lesson.id)}
-                        disabled={isProcessing}
-                        className="bg-primary text-white hover:bg-primary/90 text-xs font-semibold px-4 h-9 shadow-sm"
-                      >
-                        {isProcessing ? (
-                          <span className="flex items-center gap-1.5">
-                            <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
-                            Conferma in corso...
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5">
-                            <CheckIcon className="w-4 h-4" />
-                            Conferma Lezione
-                          </span>
-                        )}
-                      </Button>
+                      <ConfirmLessonDialog
+                        lessonId={lesson.id}
+                        guestName={lesson.guest_name}
+                        guestEmail={lesson.guest_email}
+                        startTime={lesson.start_time}
+                        endTime={lesson.end_time}
+                      />
                     </div>
                   }
                 />
@@ -334,48 +304,62 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-4">
             {data.availableSlots.map((slot) => {
               const start = new Date(slot.start_time);
               const end = new Date(slot.end_time);
+              const durationMin = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
               const isDeleting = loadingActionId === slot.id;
 
               return (
-                <Card key={slot.id} className="border-border hover:border-primary/30 transition-all shadow-sm">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-text capitalize text-xs">
-                        {format(start, "EEEE d MMMM", { locale: it })}
-                      </span>
-                      <Badge variant="outline" className="text-[10px] text-primary border-primary/20">
-                        Disponibile
+                <Card key={slot.id} className="border-border shadow-sm overflow-hidden">
+                  <CardContent className="p-5 space-y-4">
+                    {/* Header con data, orario e badge */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="w-4 h-4 text-primary" />
+                        <span className="font-bold text-foreground capitalize text-sm sm:text-base">
+                          {format(start, "EEEE d MMMM yyyy", { locale: it })}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-semibold">
+                          ({format(start, "HH:mm")} - {format(end, "HH:mm")})
+                        </span>
+                      </div>
+                      <Badge className="w-fit bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-xs">
+                        Disponibile per Prenotazione
                       </Badge>
                     </div>
 
-                    <div className="flex items-center gap-2 text-text font-bold text-sm">
-                      <ClockIcon className="w-4 h-4 text-primary" />
-                      <span>
-                        {format(start, "HH:mm")} - {format(end, "HH:mm")}
-                      </span>
+                    {/* Dettagli slot e disponibilità */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="flex items-center gap-2 text-foreground">
+                        <ClockIcon className="w-4 h-4 text-primary shrink-0" />
+                        <span className="font-medium">Durata slot: {durationMin} minuti</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                        <span>Visibile pubblicamente nel calendario prenotazioni</span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <span className="text-[11px] text-muted-foreground">
-                        {Math.round((end.getTime() - start.getTime()) / (1000 * 60))} min
-                      </span>
+                    {/* Azioni / Footer */}
+                    <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-border">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleRemoveSlot(slot.id)}
                         disabled={isDeleting}
-                        className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2"
+                        className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 h-9 px-3.5"
                       >
                         {isDeleting ? (
-                          <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                          <span className="flex items-center gap-1.5">
+                            <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                            Eliminazione...
+                          </span>
                         ) : (
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1.5">
                             <Trash2Icon className="w-3.5 h-3.5" />
-                            Rimuovi
+                            Rimuovi Disponibilità
                           </span>
                         )}
                       </Button>

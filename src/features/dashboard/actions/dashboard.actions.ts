@@ -279,28 +279,32 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
     }
 
     if (lesson.guest_email) {
-      const profName = getProfessorDisplayName(profile);
-      const { startDate, endDate, formattedDate, formattedStartTime, formattedEndTime } =
-        formatLessonDates(lesson.start_time, lesson.end_time);
-      const { manageUrl, googleCalendarUrl } = getLessonUrls(
-        lessonId,
-        profName,
-        startDate,
-        endDate
-      );
+      try {
+        const profName = getProfessorDisplayName(profile);
+        const { startDate, endDate, formattedDate, formattedStartTime, formattedEndTime } =
+          formatLessonDates(lesson.start_time, lesson.end_time);
+        const { manageUrl, googleCalendarUrl } = getLessonUrls(
+          lessonId,
+          profName,
+          startDate,
+          endDate
+        );
 
-      await sendEmail({
-        to: lesson.guest_email,
-        subject: "🎉 La tua lezione è confermata! - EduBook",
-        html: lessonConfirmedStudentEmail({
-          guestName: lesson.guest_name || "Studente",
-          formattedDate,
-          formattedStartTime,
-          formattedEndTime,
-          googleCalendarUrl,
-          manageUrl,
-        }),
-      });
+        await sendEmail({
+          to: lesson.guest_email,
+          subject: "🎉 La tua lezione è confermata! - EduBook",
+          html: lessonConfirmedStudentEmail({
+            guestName: lesson.guest_name || "Studente",
+            formattedDate,
+            formattedStartTime,
+            formattedEndTime,
+            googleCalendarUrl,
+            manageUrl,
+          }),
+        });
+      } catch (emailErr) {
+        console.warn("[confirmLesson] Invio email non riuscito ma lezione confermata:", emailErr);
+      }
     }
 
     revalidateLessonPaths(lessonId);
