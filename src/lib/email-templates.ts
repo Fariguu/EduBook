@@ -236,3 +236,175 @@ ${message}
     contentHtml: content,
   });
 }
+
+/**
+ * 4. Email di conferma lezione inviata allo studente.
+ */
+export function lessonConfirmedStudentEmail({
+  guestName,
+  formattedDate,
+  formattedStartTime,
+  formattedEndTime,
+  googleCalendarUrl,
+  manageUrl,
+}: {
+  guestName: string;
+  formattedDate: string;
+  formattedStartTime: string;
+  formattedEndTime: string;
+  googleCalendarUrl: string;
+  manageUrl: string;
+}): string {
+  const content = `
+    <h2>🎉 La tua lezione è confermata!</h2>
+    <p>Ciao <strong>${guestName}</strong>,</p>
+    <p>Il docente ha confermato la tua richiesta di lezione per il seguente appuntamento:</p>
+    
+    <div class="card">
+      <div class="card-item"><span class="card-label">📅 Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      <div class="card-item"><span class="card-label">📌 Stato:</span> <strong style="color:#238626;">Confermata</strong></div>
+    </div>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${googleCalendarUrl}" class="btn" target="_blank" style="margin-right: 8px;">Aggiungi a Google Calendar</a>
+      <a href="${manageUrl}" class="btn" target="_blank" style="background-color: #687c50;">Gestisci Prenotazione</a>
+    </div>
+
+    <p class="note">In caso di contrattempi, puoi utilizzare il link di gestione per richiedere una modifica di orario.</p>
+  `;
+
+  return wrapEmail({
+    title: "Lezione Confermata! - EduBook",
+    preheader: `La tua lezione del ${formattedDate} dalle ${formattedStartTime} alle ${formattedEndTime} è stata confermata`,
+    contentHtml: content,
+  });
+}
+
+/**
+ * 5. Email di rifiuto/annullamento prenotazione inviata allo studente.
+ */
+export function lessonRejectedStudentEmail({
+  guestName,
+  formattedDate,
+  formattedStartTime,
+  formattedEndTime,
+  reason,
+}: {
+  guestName: string;
+  formattedDate: string;
+  formattedStartTime: string;
+  formattedEndTime: string;
+  reason?: string | null;
+}): string {
+  const reasonHtml = reason
+    ? `<div class="card-item" style="margin-top:12px;"><span class="card-label">💬 Messaggio del docente:</span><br>
+        <blockquote style="margin:8px 0;padding:10px 14px;background:#ffffff;border-left:3px solid #687c50;font-style:italic;">
+          "${reason}"
+        </blockquote>
+      </div>`
+    : "";
+
+  const content = `
+    <h2>Aggiornamento Richiesta Lezione</h2>
+    <p>Ciao <strong>${guestName}</strong>,</p>
+    <p>Purtroppo il docente non ha potuto confermare la tua richiesta per la seguente lezione:</p>
+    
+    <div class="card">
+      <div class="card-item"><span class="card-label">📅 Data richiesta:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      ${reasonHtml}
+    </div>
+
+    <p>Ti invitiamo a consultare il calendario per verificare altre date o orari disponibili:</p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/prenota" class="btn">Visualizza Altre Disponibilità</a>
+    </div>
+  `;
+
+  return wrapEmail({
+    title: "Aggiornamento sulla tua richiesta di lezione - EduBook",
+    preheader: `Non è stato possibile confermare la lezione per il ${formattedDate}`,
+    contentHtml: content,
+  });
+}
+
+/**
+ * 6. Email di notifica modifica orario inviata allo studente.
+ */
+export function lessonTimeUpdatedStudentEmail({
+  guestName,
+  formattedDate,
+  formattedStartTime,
+  formattedEndTime,
+  googleCalendarUrl,
+  manageUrl,
+}: {
+  guestName: string;
+  formattedDate: string;
+  formattedStartTime: string;
+  formattedEndTime: string;
+  googleCalendarUrl: string;
+  manageUrl: string;
+}): string {
+  const content = `
+    <h2>Aggiornamento Orario Lezione</h2>
+    <p>Ciao <strong>${guestName}</strong>,</p>
+    <p>L'orario della tua lezione è stato aggiornato dal docente con i seguenti nuovi riferimenti:</p>
+    
+    <div class="card">
+      <div class="card-item"><span class="card-label">📅 Nuova Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">⏰ Nuovo Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+    </div>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${googleCalendarUrl}" class="btn" target="_blank" style="margin-right: 8px;">Aggiorna su Google Calendar</a>
+      <a href="${manageUrl}" class="btn" target="_blank" style="background-color: #687c50;">Visualizza Dettagli</a>
+    </div>
+  `;
+
+  return wrapEmail({
+    title: "Orario Lezione Modificato - EduBook",
+    preheader: `Il nuovo orario per la lezione è il ${formattedDate} dalle ${formattedStartTime} alle ${formattedEndTime}`,
+    contentHtml: content,
+  });
+}
+
+/**
+ * 7. Email di cancellazione lezione confermata inviata allo studente.
+ */
+export function lessonCancelledStudentEmail({
+  guestName,
+  formattedDate,
+  formattedStartTime,
+  formattedEndTime,
+}: {
+  guestName: string;
+  formattedDate: string;
+  formattedStartTime: string;
+  formattedEndTime: string;
+}): string {
+  const content = `
+    <h2>Lezione Annullata</h2>
+    <p>Ciao <strong>${guestName}</strong>,</p>
+    <p>Ti informiamo che la seguente lezione precedentemente programmata è stata annullata:</p>
+    
+    <div class="card">
+      <div class="card-item"><span class="card-label">📅 Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+    </div>
+
+    <p>Ci scusiamo per il disagio. Puoi prenotare un nuovo appuntamento in qualunque momento:</p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/prenota" class="btn">Prenota Nuova Lezione</a>
+    </div>
+  `;
+
+  return wrapEmail({
+    title: "Lezione Annullata - EduBook",
+    preheader: `La lezione del ${formattedDate} è stata annullata`,
+    contentHtml: content,
+  });
+}
