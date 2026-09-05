@@ -108,11 +108,52 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
   const admin = createAdminClient();
 
   try {
+    const startInitial = new Date(startTime);
+    const endInitial = new Date(endTime);
+    startInitial.setSeconds(0, 0);
+    endInitial.setSeconds(0, 0);
+
+    if (isNaN(startInitial.getTime()) || isNaN(endInitial.getTime())) {
+      return { success: false, error: "Date orario non valide." };
+    }
+
+    if (endInitial.getTime() <= startInitial.getTime()) {
+      return { success: false, error: "L'orario di fine deve essere successivo all'orario di inizio." };
+    }
+
+    if (startInitial.getTime() <= Date.now()) {
+      return { success: false, error: "La data e l'orario di inizio dello slot devono essere nel futuro." };
+    }
+
+    const durationMin = (endInitial.getTime() - startInitial.getTime()) / (1000 * 60);
+    if (durationMin < 30) {
+      return { success: false, error: "Lo slot deve avere una durata minima di 30 minuti." };
+    }
+    if (durationMin > 720) {
+      return { success: false, error: "Lo slot non può superare la durata massima di 12 ore." };
+    }
+
     if (!isRecurring || !recurrenceEndDate) {
+      // Verifica overlap per slot singolo
+      const { data: overlapping } = await admin
+        .from("lessons")
+        .select("id")
+        .in("status", ["available", "pending", "confirmed"])
+        .lt("start_time", endInitial.toISOString())
+        .gt("end_time", startInitial.toISOString())
+        .limit(1);
+
+      if (overlapping && overlapping.length > 0) {
+        return {
+          success: false,
+          error: "Esiste già uno slot o una lezione programmata in questo intervallo di orario.",
+        };
+      }
+
       // Slot singolo
       const { error } = await admin.from("lessons").insert({
-        start_time: startTime,
-        end_time: endTime,
+        start_time: startInitial.toISOString(),
+        end_time: endInitial.toISOString(),
         status: "available",
         is_available: true,
       });
@@ -128,9 +169,8 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
     }
 
     // Slot ricorrente: ripete ogni 7 giorni fino alla data limite
-    const startInitial = new Date(startTime);
-    const endInitial = new Date(endTime);
     const recEnd = new Date(recurrenceEndDate);
+    recEnd.setHours(23, 59, 59, 999);
 
     const weeksDiff = Math.min(differenceInWeeks(recEnd, startInitial) + 1, 52); // Limite di sicurezza: max 52 settimane
 
@@ -141,16 +181,30 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
 
       if (curStart.getTime() > recEnd.getTime()) break;
 
-      slotsToInsert.push({
-        start_time: curStart.toISOString(),
-        end_time: curEnd.toISOString(),
-        status: "available",
-        is_available: true,
-      });
+      // Verifica overlap per ciascun slot della serie ricorrente
+      const { data: overlapping } = await admin
+        .from("lessons")
+        .select("id")
+        .in("status", ["available", "pending", "confirmed"])
+        .lt("start_time", curEnd.toISOString())
+        .gt("end_time", curStart.toISOString())
+        .limit(1);
+
+      if (!overlapping || overlapping.length === 0) {
+        slotsToInsert.push({
+          start_time: curStart.toISOString(),
+          end_time: curEnd.toISOString(),
+          status: "available",
+          is_available: true,
+        });
+      }
     }
 
     if (slotsToInsert.length === 0) {
-      return { success: false, error: "Nessuno slot generato con i parametri indicati." };
+      return {
+        success: false,
+        error: "Nessuno slot generato: gli orari indicati sono già occupati o non validi.",
+      };
     }
 
     const { error } = await admin.from("lessons").insert(slotsToInsert);
@@ -328,16 +382,51 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
   const admin = createAdminClient();
 
   try {
+    const startObj = new Date(newStartTime);
+    const endObj = new Date(newEndTime);
+    startObj.setSeconds(0, 0);
+    endObj.setSeconds(0, 0);
+
+    if (isNaN(startObj.getTime()) || isNaN(endObj.getTime())) {
+      return { success: false, error: "Date orario non valide." };
+    }
+
+    if (endObj.getTime() <= startObj.getTime()) {
+      return { success: false, error: "L'orario di fine deve essere successivo all'orario di inizio." };
+    }
+
+    const durationMin = (endObj.getTime() - startObj.getTime()) / (1000 * 60);
+    if (durationMin < 30) {
+      return { success: false, error: "La durata minima della lezione è di 30 minuti." };
+    }
+
     const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
       return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
+    // Verifica che il nuovo orario non si sovrapponga a un'altra lezione confermata
+    const { data: colliding } = await admin
+      .from("lessons")
+      .select("id")
+      .eq("status", "confirmed")
+      .neq("id", lessonId)
+      .lt("start_time", endObj.toISOString())
+      .gt("end_time", startObj.toISOString())
+      .limit(1);
+
+    if (colliding && colliding.length > 0) {
+      return {
+        success: false,
+        error: "Il nuovo orario selezionato collide con un'altra lezione già confermata.",
+      };
+    }
+
     const { error: updateErr } = await admin
       .from("lessons")
       .update({
-        start_time: newStartTime,
-        end_time: newEndTime,
+        start_time: startObj.toISOString(),
+        end_time: endObj.toISOString(),
         reschedule_requested: false,
         reschedule_notes: null,
         updated_at: new Date().toISOString(),

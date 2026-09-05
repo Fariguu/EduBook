@@ -108,12 +108,13 @@ export function BookingCalendar({
       return;
     }
 
-    if (!guestName.trim()) {
-      toast.error("Inserisci il tuo nome e cognome.");
+    if (!guestName.trim() || guestName.trim().length < 2) {
+      toast.error("Il nome deve contenere almeno 2 caratteri.");
       return;
     }
 
-    if (!guestEmail.trim() || !guestEmail.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!guestEmail.trim() || !emailRegex.test(guestEmail.trim())) {
       toast.error("Inserisci un indirizzo email valido.");
       return;
     }
@@ -247,21 +248,21 @@ export function BookingCalendar({
   const today = startOfToday();
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-4">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <div className="w-full max-w-6xl mx-auto py-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* COLONNA SINISTRA: Calendario */}
-        <div className="lg:col-span-5">
-          <Card className="border-border shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-bold flex items-center gap-2 text-text">
+        <div className="lg:col-span-6">
+          <Card className="border-border shadow-md overflow-hidden">
+            <CardHeader className="pb-4 border-b border-border/60 bg-muted/20">
+              <CardTitle className="text-xl font-bold flex items-center gap-2.5 text-text">
                 <CalendarIcon className="w-5 h-5 text-primary" />
                 Seleziona una data
               </CardTitle>
-              <CardDescription>
-                I giorni evidenziati hanno almeno uno slot di lezione disponibile.
+              <CardDescription className="text-sm">
+                I giorni con punto verde hanno almeno uno slot di lezione disponibile.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center p-2 sm:p-4">
+            <CardContent className="p-3 sm:p-6 flex justify-center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -273,16 +274,16 @@ export function BookingCalendar({
                 }}
                 modifiersClassNames={{
                   hasSlots:
-                    "font-bold text-primary relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-primary after:rounded-full",
+                    "font-bold text-primary relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full",
                 }}
-                className="rounded-md border border-border"
+                className="w-full max-w-md [--cell-size:2.85rem] text-base"
               />
             </CardContent>
           </Card>
         </div>
 
         {/* COLONNA DESTRA: Slot orari e Modulo Prenotazione */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-6">
           <AnimatePresence mode="wait">
             {!selectedDate ? (
               <motion.div
@@ -426,7 +427,7 @@ export function BookingCalendar({
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <form onSubmit={handleSubmitBooking} className="space-y-4">
+                        <form noValidate onSubmit={handleSubmitBooking} className="space-y-4">
                           <div className="space-y-1.5">
                             <Label htmlFor="guestName" className="text-sm font-medium">
                               Nome e Cognome <span className="text-destructive">*</span>

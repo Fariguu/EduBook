@@ -57,7 +57,7 @@ export function RescheduleForm({ lessonId, onSuccess, onCancel }: RescheduleForm
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+    <form noValidate onSubmit={handleSubmit} className="space-y-4 pt-2">
       <div className="space-y-1.5">
         <Label htmlFor="rescheduleNotes" className="text-sm font-semibold text-text">
           Motivazione o orari alternativi preferiti <span className="text-destructive">*</span>

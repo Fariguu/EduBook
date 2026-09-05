@@ -105,46 +105,94 @@ export function LessonTabs({ data }: LessonTabsProps) {
   };
 
   return (
-    <Tabs defaultValue="in-attesa" className="w-full space-y-6">
-      <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full h-auto p-1 bg-muted/60 rounded-xl border border-border">
-        <TabsTrigger value="in-attesa" className="py-2.5 text-xs sm:text-sm font-semibold gap-2">
-          <ClockIcon className="w-4 h-4 text-amber-500" />
-          <span>In Attesa</span>
-          {data.stats.pendingCount > 0 && (
-            <Badge className="bg-amber-500 text-white hover:bg-amber-500 text-[10px] px-1.5 py-0 h-4">
-              {data.stats.pendingCount}
-            </Badge>
-          )}
-        </TabsTrigger>
+    <Tabs defaultValue="in-attesa" className="w-full">
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* COLONNA SINISTRA: 4 PULSANTI VERTICALI + AZIONE RAPIDA SLOT */}
+        <div className="w-full md:w-64 lg:w-72 shrink-0 space-y-4">
+          <div className="p-3 bg-card rounded-xl border border-border shadow-sm space-y-2">
+            <div className="px-2 py-1 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              Sezioni Operative
+            </div>
+            <TabsList className="flex flex-col w-full h-auto p-0 bg-transparent space-y-1.5 border-0">
+              <TabsTrigger
+                value="in-attesa"
+                className="w-full justify-between px-3.5 py-3 text-sm font-semibold rounded-lg border border-transparent transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:text-foreground"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ClockIcon className="w-4 h-4 text-amber-500 data-[state=active]:text-white" />
+                  <span>In Attesa</span>
+                </div>
+                {data.stats.pendingCount > 0 ? (
+                  <Badge className="bg-amber-500 text-white hover:bg-amber-500 text-xs px-2 py-0.5">
+                    {data.stats.pendingCount}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs text-muted-foreground border-border/80">
+                    0
+                  </Badge>
+                )}
+              </TabsTrigger>
 
-        <TabsTrigger value="confermate" className="py-2.5 text-xs sm:text-sm font-semibold gap-2">
-          <CheckCircle2Icon className="w-4 h-4 text-primary" />
-          <span>Confermate</span>
-          {data.stats.confirmedCount > 0 && (
-            <Badge className="bg-primary text-white hover:bg-primary text-[10px] px-1.5 py-0 h-4">
-              {data.stats.confirmedCount}
-            </Badge>
-          )}
-        </TabsTrigger>
+              <TabsTrigger
+                value="confermate"
+                className="w-full justify-between px-3.5 py-3 text-sm font-semibold rounded-lg border border-transparent transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:text-foreground"
+              >
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2Icon className="w-4 h-4 text-primary data-[state=active]:text-white" />
+                  <span>Confermate</span>
+                </div>
+                <Badge variant={data.stats.confirmedCount > 0 ? "default" : "outline"} className="text-xs px-2 py-0.5">
+                  {data.stats.confirmedCount}
+                </Badge>
+              </TabsTrigger>
 
-        <TabsTrigger value="disponibilita" className="py-2.5 text-xs sm:text-sm font-semibold gap-2">
-          <CalendarIcon className="w-4 h-4 text-secondary" />
-          <span>Disponibilità</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-            {data.stats.availableCount}
-          </Badge>
-        </TabsTrigger>
+              <TabsTrigger
+                value="disponibilita"
+                className="w-full justify-between px-3.5 py-3 text-sm font-semibold rounded-lg border border-transparent transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:text-foreground"
+              >
+                <div className="flex items-center gap-2.5">
+                  <CalendarIcon className="w-4 h-4 text-secondary data-[state=active]:text-white" />
+                  <span>Disponibilità</span>
+                </div>
+                <Badge variant="outline" className="text-xs px-2 py-0.5">
+                  {data.stats.availableCount}
+                </Badge>
+              </TabsTrigger>
 
-        <TabsTrigger value="messaggi" className="py-2.5 text-xs sm:text-sm font-semibold gap-2">
-          <MessageSquareIcon className="w-4 h-4 text-sky-500" />
-          <span>Messaggi</span>
-          {data.stats.contactsCount > 0 && (
-            <Badge className="bg-sky-500 text-white hover:bg-sky-500 text-[10px] px-1.5 py-0 h-4">
-              {data.stats.contactsCount}
-            </Badge>
-          )}
-        </TabsTrigger>
-      </TabsList>
+              <TabsTrigger
+                value="messaggi"
+                className="w-full justify-between px-3.5 py-3 text-sm font-semibold rounded-lg border border-transparent transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:text-foreground"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MessageSquareIcon className="w-4 h-4 text-sky-500 data-[state=active]:text-white" />
+                  <span>Messaggi</span>
+                </div>
+                {data.stats.contactsCount > 0 ? (
+                  <Badge className="bg-sky-500 text-white hover:bg-sky-500 text-xs px-2 py-0.5">
+                    {data.stats.contactsCount}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs text-muted-foreground border-border/80">
+                    0
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          {/* Azione Rapida Aggiunta Disponibilità */}
+          <div className="p-3.5 bg-card rounded-xl border border-border shadow-sm space-y-2">
+            <span className="text-xs font-semibold text-muted-foreground block">
+              Disponibilità Docente
+            </span>
+            <div className="w-full [&>button]:w-full">
+              <CreateSlotDialog />
+            </div>
+          </div>
+        </div>
+
+        {/* COLONNA DESTRA: AREA OPERAZIONI A DIMENSIONE STABILE */}
+        <div className="flex-1 min-w-0 w-full min-h-[520px]">
 
       {/* 1. TAB: LEZIONI IN ATTESA */}
       <TabsContent value="in-attesa" className="space-y-4">
@@ -176,7 +224,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                     </Badge>
                   }
                   footer={
-                    <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border">
+                    <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-border">
                       <RejectLessonDialog
                         lessonId={lesson.id}
                         guestName={lesson.guest_name}
@@ -187,7 +235,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         size="sm"
                         onClick={() => handleConfirm(lesson.id)}
                         disabled={isProcessing}
-                        className="bg-primary text-white hover:bg-primary/90 text-xs"
+                        className="bg-primary text-white hover:bg-primary/90 text-xs font-semibold px-4 h-9 shadow-sm"
                       >
                         {isProcessing ? (
                           <span className="flex items-center gap-1.5">
@@ -196,7 +244,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                           </span>
                         ) : (
                           <span className="flex items-center gap-1.5">
-                            <CheckIcon className="w-3.5 h-3.5" />
+                            <CheckIcon className="w-4 h-4" />
                             Conferma Lezione
                           </span>
                         )}
@@ -412,6 +460,8 @@ export function LessonTabs({ data }: LessonTabsProps) {
           </div>
         )}
       </TabsContent>
+        </div>
+      </div>
     </Tabs>
   );
 }
