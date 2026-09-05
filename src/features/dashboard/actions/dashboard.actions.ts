@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/features/auth/utils/require-auth";
 import { createAdminClient } from "@/utils/supabase/server";
 import {
@@ -20,11 +21,15 @@ import {
   lessonTimeUpdatedStudentEmail,
   lessonCancelledStudentEmail,
 } from "@/lib/email-templates";
-import { revalidatePath } from "next/cache";
-import { addWeeks, differenceInWeeks, format } from "date-fns";
-import { it } from "date-fns/locale";
-
-const formatGCalDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, "");
+import { addWeeks, differenceInWeeks } from "date-fns";
+import {
+  fetchLessonById,
+  formatLessonDates,
+  getProfessorDisplayName,
+  getLessonUrls,
+  revalidateLessonPaths,
+  resetSlotToAvailable,
+} from "../utils/lesson-action-helpers";
 
 /**
  * Recupera tutti i dati necessari per la dashboard del professore.
@@ -201,18 +206,11 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
   const admin = createAdminClient();
 
   try {
-    // 1. Recupera la lezione
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
-    // 2. Aggiorna stato in confirmed
     const { error: updateErr } = await admin
       .from("lessons")
       .update({
@@ -226,27 +224,16 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
       return { success: false, error: "Impossibile confermare la lezione." };
     }
 
-    // 3. Notifica email allo studente se presente l'indirizzo
     if (lesson.guest_email) {
-      const startDate = new Date(lesson.start_time);
-      const endDate = new Date(lesson.end_time);
-      const profName =
-        profile?.first_name || profile?.last_name
-          ? `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
-          : "il Professore";
-
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      const manageUrl = `${siteUrl}/gestisci/${lessonId}`;
-
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-        `Lezione con ${profName}`
-      )}&dates=${formatGCalDate(startDate)}/${formatGCalDate(endDate)}&details=${encodeURIComponent(
-        `Lezione privata con ${profName}.\nID: ${lessonId}\nGestione: ${manageUrl}`
-      )}`;
+      const profName = getProfessorDisplayName(profile);
+      const { startDate, endDate, formattedDate, formattedStartTime, formattedEndTime } =
+        formatLessonDates(lesson.start_time, lesson.end_time);
+      const { manageUrl, googleCalendarUrl } = getLessonUrls(
+        lessonId,
+        profName,
+        startDate,
+        endDate
+      );
 
       await sendEmail({
         to: lesson.guest_email,
@@ -262,9 +249,7 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[confirmLesson] Errore inatteso:", err);
@@ -287,37 +272,19 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
   const admin = createAdminClient();
 
   try {
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
-    // Salva riferimenti per l'email prima di resettare i campi
     const guestEmail = lesson.guest_email;
     const guestName = lesson.guest_name || "Studente";
-    const startDate = new Date(lesson.start_time);
-    const endDate = new Date(lesson.end_time);
+    const { formattedDate, formattedStartTime, formattedEndTime } = formatLessonDates(
+      lesson.start_time,
+      lesson.end_time
+    );
 
-    // Resetta lo slot a disponibile e cancella i dati del guest
-    const { error: resetErr } = await admin
-      .from("lessons")
-      .update({
-        status: "available",
-        is_available: true,
-        student_id: null,
-        guest_name: null,
-        guest_email: null,
-        notes: null,
-        reschedule_requested: false,
-        reschedule_notes: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", lessonId);
+    const { error: resetErr } = await resetSlotToAvailable(admin, lessonId);
 
     if (resetErr) {
       console.error("[rejectLesson] Errore reset slot:", resetErr);
@@ -325,10 +292,6 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
     }
 
     if (guestEmail) {
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
       await sendEmail({
         to: guestEmail,
         subject: "Aggiornamento richiesta lezione - EduBook",
@@ -342,9 +305,7 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[rejectLesson] Errore inatteso:", err);
@@ -367,14 +328,9 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
   const admin = createAdminClient();
 
   try {
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
     const { error: updateErr } = await admin
@@ -394,25 +350,15 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
     }
 
     if (lesson.guest_email) {
-      const startDate = new Date(newStartTime);
-      const endDate = new Date(newEndTime);
-      const profName =
-        profile?.first_name || profile?.last_name
-          ? `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
-          : "il Professore";
-
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      const manageUrl = `${siteUrl}/gestisci/${lessonId}`;
-
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-        `Lezione con ${profName}`
-      )}&dates=${formatGCalDate(startDate)}/${formatGCalDate(endDate)}&details=${encodeURIComponent(
-        `Lezione aggiornata con ${profName}.\nID: ${lessonId}`
-      )}`;
+      const profName = getProfessorDisplayName(profile);
+      const { startDate, endDate, formattedDate, formattedStartTime, formattedEndTime } =
+        formatLessonDates(newStartTime, newEndTime);
+      const { manageUrl, googleCalendarUrl } = getLessonUrls(
+        lessonId,
+        profName,
+        startDate,
+        endDate
+      );
 
       await sendEmail({
         to: lesson.guest_email,
@@ -428,9 +374,7 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[updateLessonTime] Errore inatteso:", err);
@@ -455,36 +399,20 @@ export async function cancelLessonWithChoice(
   const admin = createAdminClient();
 
   try {
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
     const guestEmail = lesson.guest_email;
     const guestName = lesson.guest_name || "Studente";
-    const startDate = new Date(lesson.start_time);
-    const endDate = new Date(lesson.end_time);
+    const { formattedDate, formattedStartTime, formattedEndTime } = formatLessonDates(
+      lesson.start_time,
+      lesson.end_time
+    );
 
     if (keepAvailable) {
-      const { error: resetErr } = await admin
-        .from("lessons")
-        .update({
-          status: "available",
-          is_available: true,
-          student_id: null,
-          guest_name: null,
-          guest_email: null,
-          notes: null,
-          reschedule_requested: false,
-          reschedule_notes: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", lessonId);
+      const { error: resetErr } = await resetSlotToAvailable(admin, lessonId);
 
       if (resetErr) {
         console.error("[cancelLessonWithChoice] Errore reset:", resetErr);
@@ -503,10 +431,6 @@ export async function cancelLessonWithChoice(
     }
 
     if (guestEmail) {
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
       await sendEmail({
         to: guestEmail,
         subject: "Lezione Annullata - EduBook",
@@ -519,9 +443,7 @@ export async function cancelLessonWithChoice(
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[cancelLessonWithChoice] Errore inatteso:", err);

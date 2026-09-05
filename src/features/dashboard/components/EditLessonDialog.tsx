@@ -6,17 +6,17 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ClockIcon, Loader2Icon, PencilIcon } from "lucide-react";
+import { ClockIcon, PencilIcon } from "lucide-react";
 import { format } from "date-fns";
 import type { DashboardLesson } from "../types/dashboard.types";
 import { updateLessonTime } from "../actions/dashboard.actions";
+import { DialogActionFooter } from "./DialogActionFooter";
 
 interface EditLessonDialogProps {
   lesson: DashboardLesson;
@@ -138,30 +138,11 @@ export function EditLessonDialog({ lesson, trigger }: EditLessonDialogProps) {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isSubmitting}
-            >
-              Annulla
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2Icon className="w-4 h-4 animate-spin" />
-                  Salvataggio...
-                </span>
-              ) : (
-                "Salva Modifiche"
-              )}
-            </Button>
-          </DialogFooter>
+          <DialogActionFooter
+            onCancel={() => setOpen(false)}
+            isSubmitting={isSubmitting}
+            submitLabel="Salva Modifiche"
+          />
         </form>
       </DialogContent>
     </Dialog>

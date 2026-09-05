@@ -15,8 +15,6 @@ import {
   MessageSquareIcon,
   UserIcon,
   MailIcon,
-  FileTextIcon,
-  AlertTriangleIcon,
   Trash2Icon,
   CheckIcon,
   CalendarPlusIcon,
@@ -30,6 +28,7 @@ import { CreateSlotDialog } from "./CreateSlotDialog";
 import { EditLessonDialog } from "./EditLessonDialog";
 import { RejectLessonDialog } from "./RejectLessonDialog";
 import { CancelLessonDialog } from "./CancelLessonDialog";
+import { LessonCardItem } from "./LessonCardItem";
 
 interface LessonTabsProps {
   data: DashboardData;
@@ -165,66 +164,19 @@ export function LessonTabs({ data }: LessonTabsProps) {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {data.pendingLessons.map((lesson) => {
-              const start = new Date(lesson.start_time);
-              const end = new Date(lesson.end_time);
               const isProcessing = loadingActionId === lesson.id;
 
               return (
-                <Card key={lesson.id} className="border-border shadow-sm overflow-hidden">
-                  <CardContent className="p-5 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-primary" />
-                        <span className="font-bold text-text capitalize text-sm sm:text-base">
-                          {format(start, "EEEE d MMMM yyyy", { locale: it })}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-semibold">
-                          ({format(start, "HH:mm")} - {format(end, "HH:mm")})
-                        </span>
-                      </div>
-                      <Badge className="w-fit bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-xs">
-                        In Attesa di Conferma
-                      </Badge>
-                    </div>
-
-                    {/* Allerta Spostamento se richiesto dallo studente */}
-                    {lesson.reschedule_requested && (
-                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs space-y-1">
-                        <div className="flex items-center gap-1.5 font-bold">
-                          <AlertTriangleIcon className="w-4 h-4" />
-                          Lo studente ha richiesto di spostare questa lezione
-                        </div>
-                        {lesson.reschedule_notes && (
-                          <p className="italic pl-5">&ldquo;{lesson.reschedule_notes}&rdquo;</p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Dati studente e note */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2 text-text">
-                        <UserIcon className="w-4 h-4 text-primary shrink-0" />
-                        <span className="font-medium">{lesson.guest_name || "Ospite"}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MailIcon className="w-4 h-4 text-primary shrink-0" />
-                        <a href={`mailto:${lesson.guest_email}`} className="hover:underline">
-                          {lesson.guest_email || "Nessuna email"}
-                        </a>
-                      </div>
-                    </div>
-
-                    {lesson.notes && (
-                      <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-text space-y-1">
-                        <span className="text-muted-foreground font-semibold flex items-center gap-1">
-                          <FileTextIcon className="w-3.5 h-3.5" /> Note inserite dallo studente:
-                        </span>
-                        <p className="italic pl-4">{lesson.notes}</p>
-                      </div>
-                    )}
-
-                    {/* Azioni del docente */}
-                    <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+                <LessonCardItem
+                  key={lesson.id}
+                  lesson={lesson}
+                  badge={
+                    <Badge className="w-fit bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-xs">
+                      In Attesa di Conferma
+                    </Badge>
+                  }
+                  footer={
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border">
                       <RejectLessonDialog
                         lessonId={lesson.id}
                         guestName={lesson.guest_name}
@@ -250,8 +202,8 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         )}
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  }
+                />
               );
             })}
           </div>
@@ -275,49 +227,16 @@ export function LessonTabs({ data }: LessonTabsProps) {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {data.confirmedLessons.map((lesson) => {
-              const start = new Date(lesson.start_time);
-              const end = new Date(lesson.end_time);
-
               return (
-                <Card key={lesson.id} className="border-border shadow-sm overflow-hidden">
-                  <CardContent className="p-5 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-primary" />
-                        <span className="font-bold text-text capitalize text-sm sm:text-base">
-                          {format(start, "EEEE d MMMM yyyy", { locale: it })}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-semibold">
-                          ({format(start, "HH:mm")} - {format(end, "HH:mm")})
-                        </span>
-                      </div>
-                      <Badge className="w-fit bg-primary text-white hover:bg-primary text-xs">
-                        ✓ Confermata
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2 text-text">
-                        <UserIcon className="w-4 h-4 text-primary shrink-0" />
-                        <span className="font-medium">{lesson.guest_name || "Ospite"}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MailIcon className="w-4 h-4 text-primary shrink-0" />
-                        <a href={`mailto:${lesson.guest_email}`} className="hover:underline">
-                          {lesson.guest_email || "Nessuna email"}
-                        </a>
-                      </div>
-                    </div>
-
-                    {lesson.notes && (
-                      <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-text space-y-1">
-                        <span className="text-muted-foreground font-semibold flex items-center gap-1">
-                          <FileTextIcon className="w-3.5 h-3.5" /> Note studente:
-                        </span>
-                        <p className="italic pl-4">{lesson.notes}</p>
-                      </div>
-                    )}
-
+                <LessonCardItem
+                  key={lesson.id}
+                  lesson={lesson}
+                  badge={
+                    <Badge className="w-fit bg-primary text-white hover:bg-primary text-xs">
+                      ✓ Confermata
+                    </Badge>
+                  }
+                  footer={
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
                       <a
                         href={getGCalUrl(lesson)}
@@ -334,8 +253,8 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         <CancelLessonDialog lessonId={lesson.id} guestName={lesson.guest_name} />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  }
+                />
               );
             })}
           </div>

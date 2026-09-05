@@ -1,8 +1,8 @@
 import { Metadata } from "next";
-import { createClient } from "@/utils/supabase/server";
 import { PublicNavbar } from "@/features/landing/components/PublicNavbar";
 import { Footer } from "@/features/landing/components/Footer";
 import { ContactForm } from "@/features/contact/components/ContactForm";
+import { getPublicProfessorProfile } from "@/features/landing/utils/get-public-profile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,43 +25,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ContattiPage() {
-  let isAuthenticated = false;
-  let professorName = "Prof. Gabriele Farigu";
-  let email = "info@edubook.it";
-  let phone: string | null = null;
-  let subjects: string[] = ["Matematica", "Fisica", "Analisi 1"];
-
-  try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    isAuthenticated = Boolean(user);
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("first_name, last_name, email, phone, teaching_subjects")
-      .limit(1)
-      .maybeSingle();
-
-    if (profile) {
-      if (profile.first_name || profile.last_name) {
-        professorName = `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim();
-      }
-      if (profile.email) {
-        email = profile.email;
-      }
-      if (profile.phone) {
-        phone = profile.phone;
-      }
-      if (profile.teaching_subjects && profile.teaching_subjects.length > 0) {
-        subjects = profile.teaching_subjects;
-      }
-    }
-  } catch (err) {
-    console.error("[ContattiPage] Errore recupero profilo:", err);
-  }
+  const { isAuthenticated, professorName, email, phone, subjects } =
+    await getPublicProfessorProfile();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">

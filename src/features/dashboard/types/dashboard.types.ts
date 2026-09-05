@@ -8,6 +8,7 @@ export interface DashboardStatsData {
 }
 
 export type DashboardLesson = Lesson;
+export type LessonRecord = Lesson;
 
 export interface ContactMessage {
   id: string;

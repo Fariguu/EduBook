@@ -59,7 +59,7 @@ BEGIN
       'authenticated',
       'authenticated',
       prof_email,
-      extensions.crypt(prof_password, extensions.gen_salt('bf')),
+      extensions.crypt(prof_password, extensions.gen_salt('bf', 10)),
       now(),
       null,
       null,
@@ -73,7 +73,28 @@ BEGIN
       ''
     );
 
-    -- 2. Insert into public.profiles (will be matched with trigger, but we enforce admin role here)
+    -- 2. Insert into auth.identities
+    INSERT INTO auth.identities (
+      id,
+      provider_id,
+      user_id,
+      identity_data,
+      provider,
+      last_sign_in_at,
+      created_at,
+      updated_at
+    ) VALUES (
+      gen_random_uuid(),
+      new_user_id::text,
+      new_user_id,
+      jsonb_build_object('sub', new_user_id::text, 'email', prof_email, 'email_verified', true),
+      'email',
+      now(),
+      now(),
+      now()
+    );
+
+    -- 3. Insert into public.profiles (will be matched with trigger, but we enforce admin role here)
     -- If the handle_new_user trigger already executed and created a profile with 'user' role:
     IF EXISTS (SELECT 1 FROM public.profiles WHERE id = new_user_id) THEN
       UPDATE public.profiles 

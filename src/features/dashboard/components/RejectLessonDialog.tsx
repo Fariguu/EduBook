@@ -6,15 +6,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangleIcon, Loader2Icon, XCircleIcon } from "lucide-react";
+import { AlertTriangleIcon, XCircleIcon } from "lucide-react";
 import { rejectLesson } from "../actions/dashboard.actions";
+import { DialogActionFooter } from "./DialogActionFooter";
 
 interface RejectLessonDialogProps {
   lessonId: string;
@@ -104,30 +104,13 @@ export function RejectLessonDialog({
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isSubmitting}
-            >
-              Annulla
-            </Button>
-            <Button
-              type="submit"
-              variant="destructive"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2Icon className="w-4 h-4 animate-spin" />
-                  Rifiuto in corso...
-                </span>
-              ) : (
-                "Conferma Rifiuto"
-              )}
-            </Button>
-          </DialogFooter>
+          <DialogActionFooter
+            onCancel={() => setOpen(false)}
+            isSubmitting={isSubmitting}
+            submitLabel="Conferma Rifiuto"
+            submittingLabel="Rifiuto in corso..."
+            submitVariant="destructive"
+          />
         </form>
       </DialogContent>
     </Dialog>

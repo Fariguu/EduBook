@@ -99,7 +99,7 @@ export function AuthModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[420px] p-6 overflow-hidden">
+      <DialogContent className="sm:max-w-[420px] p-6 overflow-hidden bg-card text-card-foreground border border-border shadow-2xl">
         <AnimatePresence mode="wait">
           {view === "login" ? (
             <motion.div
