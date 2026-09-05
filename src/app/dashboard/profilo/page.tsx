@@ -1,12 +1,13 @@
 import { Metadata } from "next";
 import { getProfile } from "@/features/profile/actions/profile.actions";
 import { ProfileForm } from "@/features/profile/components/ProfileForm";
+import { CredentialsCard } from "@/features/profile/components/CredentialsCard";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Modifica Profilo | EduBook Dashboard",
-  description: "Aggiorna le informazioni personali, i recapiti e le materie insegnate.",
+  description: "Aggiorna le informazioni personali, i recapiti, le credenziali e le materie insegnate.",
 };
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export default async function ProfiloPage() {
   const profile = await getProfile();
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
       {/* Intestazione e ritorno */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
         <div>
@@ -30,12 +31,15 @@ export default async function ProfiloPage() {
             Gestione Profilo Docente
           </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
-            Aggiorna la tua presentazione, le materie insegnate e i recapiti visibili dagli studenti sul sito.
+            Aggiorna la tua presentazione, le materie insegnate, i recapiti e le credenziali di accesso.
           </p>
         </div>
       </div>
 
       <ProfileForm initialProfile={profile} />
+
+      {/* Sezione Credenziali di Accesso e Sicurezza */}
+      <CredentialsCard initialEmail={profile?.authEmail || profile?.email || ""} />
     </div>
   );
 }

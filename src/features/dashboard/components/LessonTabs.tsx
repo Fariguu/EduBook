@@ -352,14 +352,11 @@ export function LessonTabs({ data }: LessonTabsProps) {
 
       {/* 3. TAB: DISPONIBILITÀ (SLOT LIBERI) */}
       <TabsContent value="disponibilita" className="w-full space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border w-full">
-          <div>
-            <h3 className="font-bold text-text text-sm sm:text-base">Gestione Slot di Disponibilità</h3>
-            <p className="text-xs text-muted-foreground">
-              Gli slot liberi impostati qui sotto sono visibili pubblicamente agli studenti sul calendario.
-            </p>
-          </div>
-          <CreateSlotDialog />
+        <div className="p-4 rounded-xl bg-card border border-border w-full">
+          <h3 className="font-bold text-text text-sm sm:text-base">Gestione Slot di Disponibilità</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Gli slot liberi impostati qui sotto sono visibili pubblicamente agli studenti sul calendario.
+          </p>
         </div>
 
         {data.availableSlots.length === 0 ? (
@@ -370,7 +367,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
               </div>
               <h3 className="font-semibold text-text text-base">Nessuno slot libero programmato</h3>
               <p className="text-muted-foreground text-xs max-w-sm mx-auto">
-                Clicca su &ldquo;Aggiungi Disponibilità&rdquo; per creare le fasce orarie in cui sei libero per lezioni private.
+                Usa il pulsante &ldquo;Aggiungi Disponibilità&rdquo; nel pannello laterale per creare le fasce orarie in cui sei libero per lezioni private.
               </p>
             </CardContent>
           </Card>
