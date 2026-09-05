@@ -82,3 +82,57 @@ export async function sendContactMessage(input: ContactSchemaInput): Promise<Con
     };
   }
 }
+
+/**
+ * Recupera l'elenco dei messaggi ricevuti dal modulo di contatto (riservato al docente).
+ */
+export async function getContactMessages() {
+  const { requireAuth } = await import("@/features/auth/utils/require-auth");
+  await requireAuth();
+
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("contacts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[getContactMessages] Errore recupero:", error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("[getContactMessages] Errore inatteso:", err);
+    return [];
+  }
+}
+
+/**
+ * Elimina un messaggio di contatto dalla dashboard.
+ */
+export async function deleteContactMessage(messageId: string): Promise<ContactActionResult> {
+  const { requireAuth } = await import("@/features/auth/utils/require-auth");
+  const { revalidatePath } = await import("next/cache");
+  await requireAuth();
+
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("contacts")
+      .delete()
+      .eq("id", messageId);
+
+    if (error) {
+      console.error("[deleteContactMessage] Errore cancellazione:", error);
+      return { success: false, error: "Impossibile eliminare il messaggio." };
+    }
+
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteContactMessage] Errore inatteso:", err);
+    return { success: false, error: "Errore durante l'eliminazione del messaggio." };
+  }
+}
