@@ -3,10 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 
 interface SubjectBadgesProps {
   subjects?: string[];
+  subjectDetails?: Record<string, string>;
 }
 
 export function SubjectBadges({
   subjects = ["Matematica", "Fisica", "Analisi 1", "Geometria", "Informatica"],
+  subjectDetails = {},
 }: SubjectBadgesProps) {
   const subjectIcons: Record<string, typeof Calculator> = {
     Matematica: Calculator,
@@ -32,6 +34,9 @@ export function SubjectBadges({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {subjects.map((subject) => {
             const Icon = subjectIcons[subject] || CheckCircle;
+            const description =
+              subjectDetails[subject] ||
+              "Supporto completo su teoria, esercizi svolti, simulazioni di verifica ed esami.";
 
             return (
               <Card
@@ -47,7 +52,7 @@ export function SubjectBadges({
                       {subject}
                     </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Supporto completo su teoria, esercizi svolti, simulazioni di verifica ed esami.
+                      {description}
                     </p>
                   </div>
                 </CardContent>

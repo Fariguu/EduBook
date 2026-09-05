@@ -33,6 +33,8 @@ interface ProfileData {
   phone?: string | null;
   bio?: string | null;
   teaching_subjects?: string[] | null;
+  subject_details?: Record<string, string> | null;
+  suggested_subjects?: string[] | null;
 }
 
 interface ProfileFormProps {
@@ -53,22 +55,30 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       ? initialProfile.teaching_subjects
       : ["Matematica", "Fisica", "Analisi 1"]
   );
+  const [subjectDetails, setSubjectDetails] = React.useState<Record<string, string>>(
+    initialProfile?.subject_details || {}
+  );
+  const [suggestedSubjects, setSuggestedSubjects] = React.useState<string[]>(
+    initialProfile?.suggested_subjects && initialProfile.suggested_subjects.length > 0
+      ? initialProfile.suggested_subjects
+      : [
+          "Matematica",
+          "Fisica",
+          "Analisi 1",
+          "Analisi 2",
+          "Geometria",
+          "Chimica",
+          "Informatica",
+          "Statistica",
+          "Trigonometria",
+        ]
+  );
+
   const [newSubject, setNewSubject] = React.useState("");
+  const [newSuggestion, setNewSuggestion] = React.useState("");
   const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
   const [editingValue, setEditingValue] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const suggestedSubjects = [
-    "Matematica",
-    "Fisica",
-    "Analisi 1",
-    "Analisi 2",
-    "Geometria",
-    "Chimica",
-    "Informatica",
-    "Statistica",
-    "Trigonometria",
-  ];
 
   const handleAddSubject = (subjectToAdd?: string) => {
     const term = (subjectToAdd || newSubject).trim();
@@ -90,7 +100,15 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       toast.error("Devi mantenere almeno una materia d'insegnamento.");
       return;
     }
+    const removedName = subjects[indexToRemove];
     setSubjects((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    if (removedName) {
+      setSubjectDetails((prev) => {
+        const next = { ...prev };
+        delete next[removedName];
+        return next;
+      });
+    }
     if (editingIndex === indexToRemove) {
       setEditingIndex(null);
       setEditingValue("");
@@ -116,7 +134,18 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       toast.error("Questa materia è già presente nell'elenco.");
       return;
     }
+    const oldName = subjects[index];
     setSubjects((prev) => prev.map((s, idx) => (idx === index ? term : s)));
+    if (oldName && oldName !== term) {
+      setSubjectDetails((prev) => {
+        const next = { ...prev };
+        if (next[oldName]) {
+          next[term] = next[oldName];
+          delete next[oldName];
+        }
+        return next;
+      });
+    }
     setEditingIndex(null);
     setEditingValue("");
   };
@@ -124,6 +153,28 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const cancelEditingSubject = () => {
     setEditingIndex(null);
     setEditingValue("");
+  };
+
+  const handleSubjectDetailChange = (subjectName: string, text: string) => {
+    setSubjectDetails((prev) => ({
+      ...prev,
+      [subjectName]: text,
+    }));
+  };
+
+  const handleAddSuggestion = () => {
+    const term = newSuggestion.trim();
+    if (!term) return;
+    if (suggestedSubjects.some((s) => s.toLowerCase() === term.toLowerCase())) {
+      toast.error("Questo suggerimento è già presente.");
+      return;
+    }
+    setSuggestedSubjects((prev) => [...prev, term]);
+    setNewSuggestion("");
+  };
+
+  const handleRemoveSuggestion = (sugToRemove: string) => {
+    setSuggestedSubjects((prev) => prev.filter((s) => s !== sugToRemove));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -162,6 +213,8 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         phone: phone.trim() || null,
         bio: bio.trim() || null,
         teaching_subjects: subjects,
+        subject_details: subjectDetails,
+        suggested_subjects: suggestedSubjects,
       });
 
       if (!res.success) {
@@ -362,10 +415,52 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </div>
           </div>
 
+          {/* Descrizioni Personalizzate delle Materie (Card nella Home) */}
+          <div className="space-y-3 pt-3 border-t border-border">
+            <div>
+              <Label className="text-xs font-bold text-foreground uppercase tracking-wider block">
+                Descrizione e Obiettivi per ciascuna materia (Homepage):
+              </Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Personalizza il testo esplicativo che viene mostrato nelle schede della sezione &ldquo;Materie e Ambiti di Insegnamento&rdquo;.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {subjects.map((sub, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-lg border border-border bg-muted/20 space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                      <BookOpenIcon className="w-3.5 h-3.5" />
+                      {sub}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {(subjectDetails[sub] || "").length}/250
+                    </span>
+                  </div>
+                  <Input
+                    value={
+                      subjectDetails[sub] !== undefined
+                        ? subjectDetails[sub]
+                        : "Supporto completo su teoria, esercizi svolti, simulazioni di verifica ed esami."
+                    }
+                    onChange={(e) => handleSubjectDetailChange(sub, e.target.value)}
+                    placeholder="Es. Approfondimento su limiti, derivate, integrali e studio di funzioni per esami universitari."
+                    className="text-xs h-9 bg-background"
+                    maxLength={250}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Aggiunta nuova materia */}
-          <div className="space-y-2 pt-2 border-t border-border">
+          <div className="space-y-2 pt-3 border-t border-border">
             <Label htmlFor="newSubjectInput" className="text-xs font-semibold">
-              Aggiungi nuova materia:
+              Aggiungi nuova materia d&apos;insegnamento:
             </Label>
             <div className="flex gap-2">
               <Input
@@ -373,7 +468,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Es. Elettronica, Statistica, Economia..."
+                placeholder="Es. Lingua Inglese, Diritto, Economia Aziendale..."
                 className="text-xs sm:text-sm"
               />
               <Button
@@ -387,24 +482,79 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               </Button>
             </div>
 
-            {/* Suggerimenti rapidi */}
-            <div className="pt-2">
-              <span className="text-[11px] text-muted-foreground block mb-1">
-                Suggerimenti veloci (clicca per aggiungere):
-              </span>
+            {/* Suggerimenti rapidi (personalizzabili ed eliminabili) */}
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-muted-foreground block">
+                  Suggerimenti rapidi (clicca per aggiungere alle materie o rimuovi dai suggerimenti):
+                </span>
+              </div>
+
               <div className="flex flex-wrap gap-1.5">
-                {suggestedSubjects
-                  .filter((s) => !subjects.some((cur) => cur.toLowerCase() === s.toLowerCase()))
-                  .map((s, i) => (
-                    <button
+                {suggestedSubjects.map((sug, i) => {
+                  const isAlreadyAdded = subjects.some(
+                    (cur) => cur.toLowerCase() === sug.toLowerCase()
+                  );
+
+                  return (
+                    <div
                       key={i}
-                      type="button"
-                      onClick={() => handleAddSubject(s)}
-                      className="px-2 py-0.5 rounded-md border border-border bg-muted/40 hover:bg-muted text-[11px] text-muted-foreground hover:text-text transition-colors"
+                      className="inline-flex items-center rounded-md border border-border bg-muted/40 text-[11px] overflow-hidden"
                     >
-                      + {s}
-                    </button>
-                  ))}
+                      <button
+                        type="button"
+                        onClick={() => handleAddSubject(sug)}
+                        disabled={isAlreadyAdded}
+                        className={`px-2 py-0.5 transition-colors ${
+                          isAlreadyAdded
+                            ? "text-muted-foreground/60 cursor-not-allowed bg-muted/60"
+                            : "text-foreground hover:text-primary hover:bg-muted font-medium"
+                        }`}
+                        title={
+                          isAlreadyAdded
+                            ? "Materia già aggiunta"
+                            : `Aggiungi "${sug}" alle materie insegnate`
+                        }
+                      >
+                        + {sug}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSuggestion(sug)}
+                        className="px-1.5 py-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border-l border-border transition-colors"
+                        title={`Elimina "${sug}" dai suggerimenti`}
+                      >
+                        <XIcon className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Form aggiunta nuovo suggerimento personalizzato */}
+              <div className="flex items-center gap-2 pt-1 max-w-sm">
+                <Input
+                  value={newSuggestion}
+                  onChange={(e) => setNewSuggestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSuggestion();
+                    }
+                  }}
+                  placeholder="Nuovo suggerimento rapido..."
+                  className="text-xs h-7 bg-background"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAddSuggestion}
+                  className="h-7 text-xs px-2 text-primary hover:bg-primary/10 shrink-0"
+                >
+                  <PlusIcon className="w-3.5 h-3.5 mr-1" />
+                  Salva Suggerimento
+                </Button>
               </div>
             </div>
           </div>

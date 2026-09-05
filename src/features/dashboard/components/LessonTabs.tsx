@@ -21,7 +21,15 @@ import {
   InboxIcon,
   RotateCwIcon,
 } from "lucide-react";
-import type { DashboardData, DashboardLesson } from "../types/dashboard.types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type { DashboardData, DashboardLesson, ContactMessage } from "../types/dashboard.types";
 import { removeAvailableSlot } from "../actions/dashboard.actions";
 import { deleteContactMessage } from "@/features/contact/actions/contact.actions";
 import { CreateSlotDialog } from "./CreateSlotDialog";
@@ -39,33 +47,43 @@ export function LessonTabs({ data }: LessonTabsProps) {
   const [loadingActionId, setLoadingActionId] = React.useState<string | null>(null);
   const [isRunningCleanup, setIsRunningCleanup] = React.useState(false);
 
-  const handleRunCleanup = async () => {
+  // Dialog State per Modali di Conferma eleganti (in stile con il design system)
+  const [slotToDelete, setSlotToDelete] = React.useState<DashboardLesson | null>(null);
+  const [messageToDelete, setMessageToDelete] = React.useState<ContactMessage | null>(null);
+  const [cleanupConfirmOpen, setCleanupConfirmOpen] = React.useState(false);
+
+  const executeCleanup = async () => {
     setIsRunningCleanup(true);
+    setCleanupConfirmOpen(false);
     try {
       const res = await fetch("/api/cron/cleanup");
       const result = await res.json();
       if (result.success) {
-        toast.success(`Cleanup completato: ${result.deletedCount} lezioni scadute rimosse.`);
+        toast.success(
+          `Cleanup completato con successo: ${result.cancelledExpired ?? 0} lezioni scadute annullate, ${result.deletedSlots ?? 0} slot passati rimossi.`
+        );
       } else {
-        toast.error(result.error || "Errore durante il cleanup.");
+        toast.error(result.error || "Errore durante l'esecuzione del cleanup.");
       }
     } catch {
-      toast.error("Impossibile eseguire il cleanup.");
+      toast.error("Impossibile eseguire il cleanup di sistema.");
     } finally {
       setIsRunningCleanup(false);
     }
   };
 
-  const handleRemoveSlot = async (slotId: string) => {
-    if (!confirm("Sei sicuro di voler eliminare questo slot di disponibilità?")) return;
-
+  const executeRemoveSlot = async () => {
+    if (!slotToDelete) return;
+    const slotId = slotToDelete.id;
+    setSlotToDelete(null);
     setLoadingActionId(slotId);
+
     try {
       const res = await removeAvailableSlot(slotId);
       if (!res.success) {
         toast.error(res.error || "Impossibile eliminare lo slot.");
       } else {
-        toast.success("Slot rimosso con successo.");
+        toast.success("Slot di disponibilità rimosso con successo.");
       }
     } catch (err) {
       console.error(err);
@@ -75,16 +93,18 @@ export function LessonTabs({ data }: LessonTabsProps) {
     }
   };
 
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("Eliminare definitivamente questo messaggio?")) return;
-
+  const executeDeleteMessage = async () => {
+    if (!messageToDelete) return;
+    const messageId = messageToDelete.id;
+    setMessageToDelete(null);
     setLoadingActionId(messageId);
+
     try {
       const res = await deleteContactMessage(messageId);
       if (!res.success) {
         toast.error(res.error || "Impossibile eliminare il messaggio.");
       } else {
-        toast.success("Messaggio eliminato.");
+        toast.success("Messaggio eliminato con successo.");
       }
     } catch (err) {
       console.error(err);
@@ -192,16 +212,21 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </div>
           </div>
 
-          {/* Manutenzione Sistema (TC-28) */}
-          <div className="p-3.5 bg-card rounded-xl border border-border shadow-sm space-y-2">
-            <span className="text-xs font-semibold text-muted-foreground block">
-              Manutenzione Sistema
-            </span>
+          {/* Manutenzione Sistema */}
+          <div className="p-3.5 bg-card rounded-xl border border-border shadow-sm space-y-2.5">
+            <div>
+              <span className="text-xs font-semibold text-foreground block">
+                Manutenzione Sistema
+              </span>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
+                Annulla le richieste scadute e rimuove gli slot passati.
+              </p>
+            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleRunCleanup}
+              onClick={() => setCleanupConfirmOpen(true)}
               disabled={isRunningCleanup}
               className="w-full text-xs font-medium h-9 border-border/80 hover:bg-muted"
             >
@@ -213,7 +238,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
               ) : (
                 <span className="flex items-center gap-1.5">
                   <RotateCwIcon className="w-3.5 h-3.5 text-primary" />
-                  Esegui Cleanup (TC-28)
+                  Avvia Manutenzione
                 </span>
               )}
             </Button>
@@ -393,7 +418,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRemoveSlot(slot.id)}
+                        onClick={() => setSlotToDelete(slot)}
                         disabled={isDeleting}
                         className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 h-9 px-3.5"
                       >
@@ -469,7 +494,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteMessage(msg.id)}
+                        onClick={() => setMessageToDelete(msg)}
                         disabled={isDeleting}
                         className="text-xs text-destructive hover:bg-destructive/10 h-8 px-2"
                       >
@@ -492,6 +517,146 @@ export function LessonTabs({ data }: LessonTabsProps) {
       </TabsContent>
         </div>
       </div>
+
+      {/* Dialog Conferma Pulizia Sistema */}
+      <Dialog open={cleanupConfirmOpen} onOpenChange={setCleanupConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-2">
+              <RotateCwIcon className="w-5 h-5" />
+            </div>
+            <DialogTitle>Conferma Manutenzione Sistema</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground space-y-2 pt-1">
+              <span>Questa operazione eseguirà la manutenzione automatica del sistema:</span>
+              <ul className="list-disc list-inside space-y-1 pl-1 text-foreground/80 font-medium">
+                <li>Annulla automaticamente le prenotazioni in attesa scadute.</li>
+                <li>Rimuove gli slot di disponibilità passati e non più prenotabili.</li>
+              </ul>
+              <span>Vuoi avviare la procedura adesso?</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCleanupConfirmOpen(false)}
+              disabled={isRunningCleanup}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              onClick={executeCleanup}
+              disabled={isRunningCleanup}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              {isRunningCleanup ? (
+                <>
+                  <Loader2Icon className="w-4 h-4 animate-spin mr-1.5" />
+                  Pulizia in corso...
+                </>
+              ) : (
+                "Conferma ed Esegui"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Conferma Eliminazione Slot */}
+      <Dialog open={!!slotToDelete} onOpenChange={(open) => !open && setSlotToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mb-2">
+              <Trash2Icon className="w-5 h-5" />
+            </div>
+            <DialogTitle>Elimina Slot di Disponibilità</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground pt-1">
+              Sei sicuro di voler rimuovere questo slot di disponibilità?
+              {slotToDelete && (
+                <span className="block mt-2 font-medium text-foreground bg-muted/60 p-2.5 rounded-md">
+                  {format(new Date(slotToDelete.start_time), "EEEE d MMMM yyyy", { locale: it })} dalle{" "}
+                  {format(new Date(slotToDelete.start_time), "HH:mm")} alle{" "}
+                  {format(new Date(slotToDelete.end_time), "HH:mm")}
+                </span>
+              )}
+              <span className="block mt-2 text-xs">
+                Gli studenti non potranno più prenotare lezioni private in questa fascia oraria.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSlotToDelete(null)}
+              disabled={loadingActionId === slotToDelete?.id}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={executeRemoveSlot}
+              disabled={loadingActionId === slotToDelete?.id}
+            >
+              {loadingActionId === slotToDelete?.id ? (
+                <>
+                  <Loader2Icon className="w-4 h-4 animate-spin mr-1.5" />
+                  Eliminazione...
+                </>
+              ) : (
+                "Elimina Slot"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Conferma Eliminazione Messaggio */}
+      <Dialog open={!!messageToDelete} onOpenChange={(open) => !open && setMessageToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-10 h-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mb-2">
+              <Trash2Icon className="w-5 h-5" />
+            </div>
+            <DialogTitle>Elimina Messaggio di Contatto</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground pt-1">
+              Sei sicuro di voler eliminare questo messaggio? L&apos;operazione non può essere annullata.
+              {messageToDelete && (
+                <span className="block mt-2 font-medium text-foreground bg-muted/60 p-2.5 rounded-md">
+                  Da: <strong>{messageToDelete.name}</strong> ({messageToDelete.email})
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setMessageToDelete(null)}
+              disabled={loadingActionId === messageToDelete?.id}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={executeDeleteMessage}
+              disabled={loadingActionId === messageToDelete?.id}
+            >
+              {loadingActionId === messageToDelete?.id ? (
+                <>
+                  <Loader2Icon className="w-4 h-4 animate-spin mr-1.5" />
+                  Eliminazione...
+                </>
+              ) : (
+                "Elimina Messaggio"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Tabs>
   );
 }

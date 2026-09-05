@@ -20,7 +20,7 @@ export async function getProfile() {
   try {
     const { data, error } = await admin
       .from("profiles")
-      .select("id, first_name, last_name, headline, email, phone, bio, teaching_subjects, avatar_url")
+      .select("id, first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects, avatar_url")
       .eq("id", user.id)
       .single();
 
@@ -50,7 +50,7 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
     };
   }
 
-  const { first_name, last_name, headline, email, phone, bio, teaching_subjects } = validation.data;
+  const { first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects } = validation.data;
   const admin = createAdminClient();
 
   try {
@@ -64,6 +64,8 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
         phone: phone || null,
         bio: bio || null,
         teaching_subjects,
+        subject_details: subject_details || {},
+        suggested_subjects: suggested_subjects || [],
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);

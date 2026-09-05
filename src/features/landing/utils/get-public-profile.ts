@@ -8,6 +8,7 @@ export interface PublicProfessorProfile {
   phone: string | null;
   bio: string;
   subjects: string[];
+  subjectDetails: Record<string, string>;
 }
 
 export async function getPublicProfessorProfile(): Promise<PublicProfessorProfile> {
@@ -19,6 +20,7 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
   let bio =
     "Docente qualificato con pluriennale esperienza nell'insegnamento di Matematica, Fisica e Analisi. Metodo personalizzato per scuola superiore e università.";
   let subjects = ["Matematica", "Fisica", "Analisi 1"];
+  let subjectDetails: Record<string, string> = {};
 
   try {
     const supabase = await createClient();
@@ -30,7 +32,7 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects")
+      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details")
       .limit(1)
       .maybeSingle();
 
@@ -53,6 +55,9 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
       if (profile.teaching_subjects && profile.teaching_subjects.length > 0) {
         subjects = profile.teaching_subjects;
       }
+      if (profile.subject_details && typeof profile.subject_details === "object") {
+        subjectDetails = profile.subject_details;
+      }
     }
   } catch (err) {
     console.error("[getPublicProfessorProfile] Errore recupero profilo:", err);
@@ -66,5 +71,6 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
     phone,
     bio,
     subjects,
+    subjectDetails,
   };
 }

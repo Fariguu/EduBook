@@ -39,6 +39,8 @@ export const profileSchema = z.object({
   teaching_subjects: z
     .array(z.string().trim().min(1, { message: "Il nome della materia non può essere vuoto" }))
     .min(1, { message: "Inserisci almeno una materia d'insegnamento" }),
+  subject_details: z.record(z.string(), z.string()).optional().nullable(),
+  suggested_subjects: z.array(z.string().trim().min(1)).optional().nullable(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

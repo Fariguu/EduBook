@@ -7,14 +7,14 @@ import { Footer } from "@/features/landing/components/Footer";
 import { getPublicProfessorProfile } from "@/features/landing/utils/get-public-profile";
 
 export default async function Home() {
-  const { professorName, headline, bio, subjects, isAuthenticated } = await getPublicProfessorProfile();
+  const { professorName, headline, bio, subjects, subjectDetails, isAuthenticated } = await getPublicProfessorProfile();
 
   return (
     <div className="flex flex-col min-h-screen">
       <PublicNavbar isAuthenticated={isAuthenticated} />
       <main className="flex-1">
         <HeroSection professorName={professorName} headline={headline} bio={bio} subjects={subjects} />
-        <SubjectBadges subjects={subjects} />
+        <SubjectBadges subjects={subjects} subjectDetails={subjectDetails} />
         <BioSection />
         <CTASection />
       </main>
