@@ -18,6 +18,9 @@ import {
   XIcon,
   Loader2Icon,
   SaveIcon,
+  PencilIcon,
+  CheckIcon,
+  BriefcaseIcon,
 } from "lucide-react";
 import { updateProfile } from "../actions/profile.actions";
 
@@ -25,6 +28,7 @@ interface ProfileData {
   id: string;
   first_name?: string | null;
   last_name?: string | null;
+  headline?: string | null;
   email?: string | null;
   phone?: string | null;
   bio?: string | null;
@@ -38,6 +42,9 @@ interface ProfileFormProps {
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [firstName, setFirstName] = React.useState(initialProfile?.first_name || "");
   const [lastName, setLastName] = React.useState(initialProfile?.last_name || "");
+  const [headline, setHeadline] = React.useState(
+    initialProfile?.headline || "Docente di Scienze Matematiche"
+  );
   const [email, setEmail] = React.useState(initialProfile?.email || "");
   const [phone, setPhone] = React.useState(initialProfile?.phone || "");
   const [bio, setBio] = React.useState(initialProfile?.bio || "");
@@ -47,6 +54,8 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       : ["Matematica", "Fisica", "Analisi 1"]
   );
   const [newSubject, setNewSubject] = React.useState("");
+  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
+  const [editingValue, setEditingValue] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const suggestedSubjects = [
@@ -82,6 +91,39 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       return;
     }
     setSubjects((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    if (editingIndex === indexToRemove) {
+      setEditingIndex(null);
+      setEditingValue("");
+    }
+  };
+
+  const startEditingSubject = (index: number) => {
+    setEditingIndex(index);
+    setEditingValue(subjects[index]);
+  };
+
+  const saveEditingSubject = (index: number) => {
+    const term = editingValue.trim();
+    if (!term) {
+      toast.error("Il nome della materia non può essere vuoto.");
+      return;
+    }
+    if (
+      subjects.some(
+        (s, idx) => idx !== index && s.toLowerCase() === term.toLowerCase()
+      )
+    ) {
+      toast.error("Questa materia è già presente nell'elenco.");
+      return;
+    }
+    setSubjects((prev) => prev.map((s, idx) => (idx === index ? term : s)));
+    setEditingIndex(null);
+    setEditingValue("");
+  };
+
+  const cancelEditingSubject = () => {
+    setEditingIndex(null);
+    setEditingValue("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -115,6 +157,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       const res = await updateProfile({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        headline: headline.trim() || "Docente di Scienze Matematiche",
         email: email.trim().toLowerCase(),
         phone: phone.trim() || null,
         bio: bio.trim() || null,
@@ -179,6 +222,23 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="headline" className="text-xs font-semibold">
+              Qualifica / Sottotitolo Professionale <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <BriefcaseIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
+              <Input
+                id="headline"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                className="pl-9"
+                placeholder="Es. Docente di Scienze Matematiche / Ingegnere Informatico"
+                required
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="profEmail" className="text-xs font-semibold">
@@ -218,41 +278,86 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         </CardContent>
       </Card>
 
-      {/* 2. MATERIE INSEGNATE (TAGS INTERATTIVI) */}
+      {/* 2. MATERIE INSEGNATE (TAGS INTERATTIVI & CRUD) */}
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-bold text-text flex items-center gap-2">
             <BookOpenIcon className="w-5 h-5 text-primary" />
-            Materie Insegnate
+            Materie Insegnate (Gestione & Modifica)
           </CardTitle>
           <CardDescription>
-            Le materie aggiunte qui appariranno come badge in rilievo nella Homepage e nella pagina Contatti.
+            Aggiungi, rinomina o rimuovi le materie insegnate. Le modifiche appariranno immediatamente nella Homepage e nel form di prenotazione.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Badge attivi */}
+          {/* Badge attivi e modifica in linea */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Materie Attive ({subjects.length}):
             </Label>
             <div className="flex flex-wrap gap-2 pt-1">
               {subjects.map((sub, idx) => (
-                <Badge
-                  key={idx}
-                  variant="secondary"
-                  className="bg-primary/10 text-primary border-primary/25 pl-3 pr-1.5 py-1 text-xs font-semibold flex items-center gap-1.5"
-                >
-                  <span>{sub}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSubject(idx)}
-                    className="w-4 h-4 rounded-full hover:bg-primary/20 flex items-center justify-center transition-colors"
-                    title={`Rimuovi ${sub}`}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
-                </Badge>
+                <div key={idx} className="inline-flex items-center">
+                  {editingIndex === idx ? (
+                    <div className="flex items-center gap-1 bg-background border border-primary rounded-md px-1.5 py-0.5 shadow-sm">
+                      <input
+                        type="text"
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveEditingSubject(idx);
+                          } else if (e.key === "Escape") {
+                            cancelEditingSubject();
+                          }
+                        }}
+                        autoFocus
+                        className="text-xs font-medium bg-transparent border-none outline-none focus:ring-0 w-28 px-1 text-foreground"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => saveEditingSubject(idx)}
+                        className="p-1 text-primary hover:bg-primary/10 rounded transition-colors"
+                        title="Salva modifica materia"
+                      >
+                        <CheckIcon className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditingSubject}
+                        className="p-1 text-muted-foreground hover:bg-muted rounded transition-colors"
+                        title="Annulla"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary border-primary/25 pl-3 pr-1 py-1 text-xs font-semibold flex items-center gap-1.5 group"
+                    >
+                      <span>{sub}</span>
+                      <button
+                        type="button"
+                        onClick={() => startEditingSubject(idx)}
+                        className="w-4 h-4 rounded hover:bg-primary/20 flex items-center justify-center text-primary/70 hover:text-primary transition-colors ml-0.5"
+                        title={`Modifica o rinomina "${sub}"`}
+                      >
+                        <PencilIcon className="w-2.5 h-2.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSubject(idx)}
+                        className="w-4 h-4 rounded-full hover:bg-destructive/20 hover:text-destructive flex items-center justify-center transition-colors"
+                        title={`Rimuovi "${sub}"`}
+                      >
+                        <XIcon className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
               ))}
             </div>
           </div>

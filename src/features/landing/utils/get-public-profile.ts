@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 export interface PublicProfessorProfile {
   isAuthenticated: boolean;
   professorName: string;
+  headline: string;
   email: string;
   phone: string | null;
   bio: string;
@@ -12,6 +13,7 @@ export interface PublicProfessorProfile {
 export async function getPublicProfessorProfile(): Promise<PublicProfessorProfile> {
   let isAuthenticated = false;
   let professorName = "Prof. Gabriele Farigu";
+  let headline = "Docente di Scienze Matematiche";
   let email = "info@edubook.it";
   let phone: string | null = null;
   let bio =
@@ -28,13 +30,16 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, email, phone, bio, teaching_subjects")
+      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects")
       .limit(1)
       .maybeSingle();
 
     if (profile) {
       if (profile.first_name || profile.last_name) {
         professorName = `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim();
+      }
+      if (profile.headline) {
+        headline = profile.headline;
       }
       if (profile.email) {
         email = profile.email;
@@ -56,6 +61,7 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
   return {
     isAuthenticated,
     professorName,
+    headline,
     email,
     phone,
     bio,

@@ -22,8 +22,8 @@ export function LessonCardItem({ lesson, badge, footer }: LessonCardItemProps) {
   const end = new Date(lesson.end_time);
 
   return (
-    <Card className="border-border shadow-sm overflow-hidden">
-      <CardContent className="p-5 space-y-4">
+    <Card className="w-full border-border shadow-sm overflow-hidden">
+      <CardContent className="w-full p-5 space-y-4">
         {/* Header con data, ora e badge */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
           <div className="flex items-center gap-2">

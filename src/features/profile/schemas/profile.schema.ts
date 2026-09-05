@@ -11,6 +11,13 @@ export const profileSchema = z.object({
     .trim()
     .min(1, { message: "Il cognome è obbligatorio" })
     .max(50, { message: "Il cognome non può superare 50 caratteri" }),
+  headline: z
+    .string()
+    .trim()
+    .max(100, { message: "Il titolo/qualifica non può superare 100 caratteri" })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   email: z
     .string()
     .trim()

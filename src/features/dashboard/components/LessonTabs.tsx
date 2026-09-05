@@ -19,6 +19,7 @@ import {
   CalendarPlusIcon,
   Loader2Icon,
   InboxIcon,
+  RotateCwIcon,
 } from "lucide-react";
 import type { DashboardData, DashboardLesson } from "../types/dashboard.types";
 import { removeAvailableSlot } from "../actions/dashboard.actions";
@@ -36,6 +37,24 @@ interface LessonTabsProps {
 
 export function LessonTabs({ data }: LessonTabsProps) {
   const [loadingActionId, setLoadingActionId] = React.useState<string | null>(null);
+  const [isRunningCleanup, setIsRunningCleanup] = React.useState(false);
+
+  const handleRunCleanup = async () => {
+    setIsRunningCleanup(true);
+    try {
+      const res = await fetch("/api/cron/cleanup");
+      const result = await res.json();
+      if (result.success) {
+        toast.success(`Cleanup completato: ${result.deletedCount} lezioni scadute rimosse.`);
+      } else {
+        toast.error(result.error || "Errore durante il cleanup.");
+      }
+    } catch {
+      toast.error("Impossibile eseguire il cleanup.");
+    } finally {
+      setIsRunningCleanup(false);
+    }
+  };
 
   const handleRemoveSlot = async (slotId: string) => {
     if (!confirm("Sei sicuro di voler eliminare questo slot di disponibilità?")) return;
@@ -172,15 +191,42 @@ export function LessonTabs({ data }: LessonTabsProps) {
               <CreateSlotDialog />
             </div>
           </div>
+
+          {/* Manutenzione Sistema (TC-28) */}
+          <div className="p-3.5 bg-card rounded-xl border border-border shadow-sm space-y-2">
+            <span className="text-xs font-semibold text-muted-foreground block">
+              Manutenzione Sistema
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRunCleanup}
+              disabled={isRunningCleanup}
+              className="w-full text-xs font-medium h-9 border-border/80 hover:bg-muted"
+            >
+              {isRunningCleanup ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                  Pulizia in corso...
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <RotateCwIcon className="w-3.5 h-3.5 text-primary" />
+                  Esegui Cleanup (TC-28)
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* COLONNA DESTRA: AREA OPERAZIONI A DIMENSIONE STABILE */}
         <div className="flex-1 min-w-0 w-full min-h-[520px]">
 
       {/* 1. TAB: LEZIONI IN ATTESA */}
-      <TabsContent value="in-attesa" className="space-y-4">
+      <TabsContent value="in-attesa" className="w-full space-y-4">
         {data.pendingLessons.length === 0 ? (
-          <Card className="border-dashed border-border bg-muted/20 text-center py-12">
+          <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
             <CardContent className="space-y-3">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <InboxIcon className="w-6 h-6" />
@@ -193,7 +239,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 w-full">
             {data.pendingLessons.map((lesson) => {
               return (
                 <LessonCardItem
@@ -229,9 +275,9 @@ export function LessonTabs({ data }: LessonTabsProps) {
       </TabsContent>
 
       {/* 2. TAB: LEZIONI CONFERMATE */}
-      <TabsContent value="confermate" className="space-y-4">
+      <TabsContent value="confermate" className="w-full space-y-4">
         {data.confirmedLessons.length === 0 ? (
-          <Card className="border-dashed border-border bg-muted/20 text-center py-12">
+          <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
             <CardContent className="space-y-3">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <CheckCircle2Icon className="w-6 h-6" />
@@ -243,7 +289,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 w-full">
             {data.confirmedLessons.map((lesson) => {
               return (
                 <LessonCardItem
@@ -280,8 +326,8 @@ export function LessonTabs({ data }: LessonTabsProps) {
       </TabsContent>
 
       {/* 3. TAB: DISPONIBILITÀ (SLOT LIBERI) */}
-      <TabsContent value="disponibilita" className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border">
+      <TabsContent value="disponibilita" className="w-full space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-card border border-border w-full">
           <div>
             <h3 className="font-bold text-text text-sm sm:text-base">Gestione Slot di Disponibilità</h3>
             <p className="text-xs text-muted-foreground">
@@ -292,7 +338,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
         </div>
 
         {data.availableSlots.length === 0 ? (
-          <Card className="border-dashed border-border bg-muted/20 text-center py-12">
+          <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
             <CardContent className="space-y-3">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <CalendarIcon className="w-6 h-6" />
@@ -304,7 +350,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 w-full">
             {data.availableSlots.map((slot) => {
               const start = new Date(slot.start_time);
               const end = new Date(slot.end_time);
@@ -312,8 +358,8 @@ export function LessonTabs({ data }: LessonTabsProps) {
               const isDeleting = loadingActionId === slot.id;
 
               return (
-                <Card key={slot.id} className="border-border shadow-sm overflow-hidden">
-                  <CardContent className="p-5 space-y-4">
+                <Card key={slot.id} className="w-full border-border shadow-sm overflow-hidden">
+                  <CardContent className="p-5 space-y-4 w-full">
                     {/* Header con data, orario e badge */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                       <div className="flex items-center gap-2">
@@ -373,9 +419,9 @@ export function LessonTabs({ data }: LessonTabsProps) {
       </TabsContent>
 
       {/* 4. TAB: MESSAGGI DAL MODULO DI CONTATTO */}
-      <TabsContent value="messaggi" className="space-y-4">
+      <TabsContent value="messaggi" className="w-full space-y-4">
         {data.contactMessages.length === 0 ? (
-          <Card className="border-dashed border-border bg-muted/20 text-center py-12">
+          <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
             <CardContent className="space-y-3">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <MessageSquareIcon className="w-6 h-6" />
@@ -387,13 +433,13 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 w-full">
             {data.contactMessages.map((msg) => {
               const isDeleting = loadingActionId === msg.id;
 
               return (
-                <Card key={msg.id} className="border-border shadow-sm">
-                  <CardContent className="p-5 space-y-3">
+                <Card key={msg.id} className="w-full border-border shadow-sm">
+                  <CardContent className="p-5 space-y-3 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                       <div className="flex items-center gap-2">
                         <UserIcon className="w-4 h-4 text-primary" />
