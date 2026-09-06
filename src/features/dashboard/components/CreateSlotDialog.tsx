@@ -10,13 +10,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { PlusIcon, CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { createSlot } from "../actions/dashboard.actions";
 import { DialogActionFooter } from "./DialogActionFooter";
+import { DateTimeFields, validateLessonTimes } from "./DateTimeFields";
 
 export function CreateSlotDialog() {
   const [open, setOpen] = React.useState(false);
@@ -35,16 +36,9 @@ export function CreateSlotDialog() {
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
-    if (!date || !startTime || !endTime) {
-      toast.error("Compila tutti i campi della data e dell'orario.");
-      return;
-    }
-
-    const startDateTime = new Date(`${date}T${startTime}`);
-    const endDateTime = new Date(`${date}T${endTime}`);
-
-    if (endDateTime.getTime() <= startDateTime.getTime()) {
-      toast.error("L'orario di fine deve essere successivo all'orario di inizio.");
+    const validation = validateLessonTimes(date, startTime, endTime);
+    if (!validation.isValid || !validation.startDate || !validation.endDate) {
+      toast.error(validation.error || "Orari non validi.");
       return;
     }
 
@@ -57,8 +51,8 @@ export function CreateSlotDialog() {
 
     try {
       const res = await createSlot({
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
+        startTime: validation.startDate.toISOString(),
+        endTime: validation.endDate.toISOString(),
         isRecurring,
         recurrenceEndDate: isRecurring
           ? new Date(`${recurrenceEndDate}T23:59:59`).toISOString()
@@ -78,8 +72,7 @@ export function CreateSlotDialog() {
       toast.success(countMsg);
       setOpen(false);
       setIsRecurring(false);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Si è verificato un errore durante la creazione.");
     } finally {
       setIsSubmitting(false);
@@ -110,47 +103,16 @@ export function CreateSlotDialog() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="slotDate" className="text-xs font-semibold">
-                Giorno della lezione <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="slotDate"
-                type="date"
-                value={date}
-                min={format(new Date(), "yyyy-MM-dd")}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="startTime" className="text-xs font-semibold">
-                  Ora Inizio <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="endTime" className="text-xs font-semibold">
-                  Ora Fine <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            <DateTimeFields
+              date={date}
+              onDateChange={setDate}
+              startTime={startTime}
+              onStartTimeChange={setStartTime}
+              endTime={endTime}
+              onEndTimeChange={setEndTime}
+              minDate={format(new Date(), "yyyy-MM-dd")}
+              idPrefix="slot"
+            />
 
             <p className="text-[11px] text-muted-foreground">
               💡 Se imposti una durata superiore a 1 ora (es. 14:00 - 18:00), il sistema lo tratterà come

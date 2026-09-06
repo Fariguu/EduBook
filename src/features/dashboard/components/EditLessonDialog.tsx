@@ -10,13 +10,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ClockIcon, PencilIcon } from "lucide-react";
 import { format } from "date-fns";
 import type { DashboardLesson } from "../types/dashboard.types";
 import { updateLessonTime } from "../actions/dashboard.actions";
 import { DialogActionFooter } from "./DialogActionFooter";
+import { DateTimeFields, validateLessonTimes } from "./DateTimeFields";
 
 interface EditLessonDialogProps {
   readonly lesson: DashboardLesson;
@@ -37,11 +36,9 @@ export function EditLessonDialog({ lesson, trigger }: Readonly<EditLessonDialogP
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
-    const newStart = new Date(`${date}T${startTime}`);
-    const newEnd = new Date(`${date}T${endTime}`);
-
-    if (newEnd.getTime() <= newStart.getTime()) {
-      toast.error("L'orario di fine deve essere successivo all'orario di inizio.");
+    const validation = validateLessonTimes(date, startTime, endTime);
+    if (!validation.isValid || !validation.startDate || !validation.endDate) {
+      toast.error(validation.error || "Orari non validi.");
       return;
     }
 
@@ -50,8 +47,8 @@ export function EditLessonDialog({ lesson, trigger }: Readonly<EditLessonDialogP
     try {
       const res = await updateLessonTime({
         lessonId: lesson.id,
-        newStartTime: newStart.toISOString(),
-        newEndTime: newEnd.toISOString(),
+        newStartTime: validation.startDate.toISOString(),
+        newEndTime: validation.endDate.toISOString(),
       });
 
       if (!res.success) {
@@ -62,8 +59,7 @@ export function EditLessonDialog({ lesson, trigger }: Readonly<EditLessonDialogP
 
       toast.success("Orario lezione aggiornato e notificato allo studente!");
       setOpen(false);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Si è verificato un errore inaspettato.");
     } finally {
       setIsSubmitting(false);
@@ -108,46 +104,15 @@ export function EditLessonDialog({ lesson, trigger }: Readonly<EditLessonDialogP
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="editDate" className="text-xs font-semibold">
-                Giorno della lezione <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="editDate"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="editStartTime" className="text-xs font-semibold">
-                  Ora Inizio <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="editStartTime"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="editEndTime" className="text-xs font-semibold">
-                  Ora Fine <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="editEndTime"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            <DateTimeFields
+              date={date}
+              onDateChange={setDate}
+              startTime={startTime}
+              onStartTimeChange={setStartTime}
+              endTime={endTime}
+              onEndTimeChange={setEndTime}
+              idPrefix="edit"
+            />
           </div>
 
           <DialogActionFooter
