@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GraduationCap, LogIn, Calendar, Mail, Home } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
 interface PublicNavbarProps {
@@ -55,10 +54,8 @@ export function PublicNavbar({ isAuthenticated = false }: PublicNavbarProps) {
           })}
         </nav>
 
-        {/* Actions & Theme Toggle */}
+        {/* Actions */}
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-
           {isAuthenticated ? (
             <Link href="/dashboard">
               <Button size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">

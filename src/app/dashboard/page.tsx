@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 import { getDashboardData } from "@/features/dashboard/actions/dashboard.actions";
 import { DashboardStats } from "@/features/dashboard/components/DashboardStats";
 import { LessonTabs } from "@/features/dashboard/components/LessonTabs";
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
       {/* INTESTAZIONE DASHBOARD */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-text tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
             Benvenuto, {data.professorName}
           </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">

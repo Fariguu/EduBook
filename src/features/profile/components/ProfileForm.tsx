@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -237,7 +237,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       {/* 1. DATI ANAGRAFICI & RECAPITI */}
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-text flex items-center gap-2">
+          <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
             <UserIcon className="w-5 h-5 text-primary" />
             Informazioni Personali & Recapiti
           </CardTitle>
@@ -334,7 +334,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       {/* 2. MATERIE INSEGNATE (TAGS INTERATTIVI & CRUD) */}
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-text flex items-center gap-2">
+          <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
             <BookOpenIcon className="w-5 h-5 text-primary" />
             Materie Insegnate (Gestione & Modifica)
           </CardTitle>
@@ -564,7 +564,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       {/* 3. BIOGRAFIA & METODOLOGIA */}
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-bold text-text flex items-center gap-2">
+          <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
             <FileTextIcon className="w-5 h-5 text-primary" />
             Biografia & Presentazione Pubblica
           </CardTitle>

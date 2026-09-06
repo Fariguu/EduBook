@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -59,7 +59,7 @@ export function RescheduleForm({ lessonId, onSuccess, onCancel }: RescheduleForm
   return (
     <form noValidate onSubmit={handleSubmit} className="space-y-4 pt-2">
       <div className="space-y-1.5">
-        <Label htmlFor="rescheduleNotes" className="text-sm font-semibold text-text">
+        <Label htmlFor="rescheduleNotes" className="text-sm font-semibold text-foreground">
           Motivazione o orari alternativi preferiti <span className="text-destructive">*</span>
         </Label>
         <Textarea

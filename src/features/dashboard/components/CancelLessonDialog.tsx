@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -82,7 +82,7 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
           </DialogHeader>
 
           <div className="space-y-3 py-4">
-            <Label className="text-xs font-semibold block text-text">
+            <Label className="text-xs font-semibold block text-foreground">
               Cosa desideri fare con questo slot orario?
             </Label>
 
@@ -90,7 +90,7 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
               <label
                 className={`flex items-start gap-3 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
                   keepAvailable
-                    ? "border-primary bg-primary/10 text-text ring-1 ring-primary"
+                    ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
                     : "border-border hover:bg-muted/40 text-muted-foreground"
                 }`}
               >
@@ -102,7 +102,7 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
                   className="mt-0.5"
                 />
                 <div>
-                  <strong className="block text-text font-semibold">
+                  <strong className="block text-foreground font-semibold">
                     Mantieni lo slot come disponibile
                   </strong>
                   <span>Lo slot rimarrà visibile nel calendario pubblico per altri studenti.</span>
@@ -112,7 +112,7 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
               <label
                 className={`flex items-start gap-3 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
                   !keepAvailable
-                    ? "border-destructive bg-destructive/10 text-text ring-1 ring-destructive"
+                    ? "border-destructive bg-destructive/10 text-foreground ring-1 ring-destructive"
                     : "border-border hover:bg-muted/40 text-muted-foreground"
                 }`}
               >

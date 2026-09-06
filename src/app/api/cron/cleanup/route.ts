@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     const deletedCount = data ? data.length : 0;
-    console.log(`[Cron Cleanup] Eseguito con successo. Lezioni eliminate: ${deletedCount}`);
+    console.info(`[Cron Cleanup] Eseguito con successo. Lezioni eliminate: ${deletedCount}`);
 
     return NextResponse.json({
       success: true,

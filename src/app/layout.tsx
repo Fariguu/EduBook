@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
-import { ThemeProvider } from "@/components/theme-provider";
 import { AuthModal } from "@/features/auth/components/AuthModal";
 import "./globals.css";
 
@@ -22,21 +21,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it" suppressHydrationWarning>
+    <html lang="it">
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-        <ThemeProvider
-          attribute="data-theme"
-          defaultTheme="light"
-          forcedTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          {children}
-          <Suspense fallback={null}>
-            <AuthModal />
-          </Suspense>
-          <Toaster position="bottom-right" closeButton richColors />
-        </ThemeProvider>
+        {children}
+        <Suspense fallback={null}>
+          <AuthModal />
+        </Suspense>
+        <Toaster position="bottom-right" closeButton richColors />
       </body>
     </html>
   );

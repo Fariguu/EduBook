@@ -14,7 +14,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
       desc: "Richieste in attesa di approvazione",
       icon: ClockIcon,
       highlight: stats.pendingCount > 0,
-      color: "text-amber-600 dark:text-amber-400",
+      color: "text-amber-600",
       bg: "bg-amber-500/10",
       border: stats.pendingCount > 0 ? "border-amber-500/40 shadow-sm" : "border-border",
     },
@@ -44,7 +44,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
       desc: "Dal modulo di contatto",
       icon: MessageSquareIcon,
       highlight: stats.contactsCount > 0,
-      color: "text-sky-600 dark:text-sky-400",
+      color: "text-sky-600",
       bg: "bg-sky-500/10",
       border: "border-border",
     },
@@ -61,7 +61,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                   {c.title}
                 </span>
-                <span className="text-2xl font-black text-text mt-0.5 block">{c.count}</span>
+                <span className="text-2xl font-black text-foreground mt-0.5 block">{c.count}</span>
                 <span className="text-[11px] text-muted-foreground mt-0.5 block">{c.desc}</span>
               </div>
               <div className={`w-12 h-12 rounded-xl ${c.bg} ${c.color} flex items-center justify-center shrink-0`}>

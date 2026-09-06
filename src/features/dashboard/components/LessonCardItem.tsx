@@ -40,13 +40,13 @@ export function LessonCardItem({ lesson, badge, footer }: LessonCardItemProps) {
 
         {/* Allerta spostamento se richiesto */}
         {lesson.reschedule_requested && (
-          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-600/80 text-amber-950 dark:text-amber-100 text-xs space-y-1 shadow-sm">
-            <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-200">
-              <AlertTriangleIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1 shadow-sm">
+            <div className="flex items-center gap-1.5 font-bold text-amber-900">
+              <AlertTriangleIcon className="w-4 h-4 text-amber-600 shrink-0" />
               Lo studente ha richiesto di spostare questa lezione
             </div>
             {lesson.reschedule_notes && (
-              <p className="italic pl-5 text-amber-900 dark:text-amber-200">&ldquo;{lesson.reschedule_notes}&rdquo;</p>
+              <p className="italic pl-5 text-amber-900">&ldquo;{lesson.reschedule_notes}&rdquo;</p>
             )}
           </div>
         )}

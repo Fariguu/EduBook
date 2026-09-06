@@ -1,6 +1,5 @@
 import { Metadata } from "next";
-import { PublicNavbar } from "@/features/landing/components/PublicNavbar";
-import { Footer } from "@/features/landing/components/Footer";
+import { PublicLayout } from "@/features/landing/components/PublicLayout";
 import { ContactForm } from "@/features/contact/components/ContactForm";
 import { getPublicProfessorProfile } from "@/features/landing/utils/get-public-profile";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,18 +28,16 @@ export default async function ContattiPage() {
     await getPublicProfessorProfile();
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <PublicNavbar isAuthenticated={isAuthenticated} />
-      <main className="flex-1 container mx-auto px-4 py-10 max-w-6xl">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-text tracking-tight">
-            Contatta il Docente
-          </h1>
-          <p className="text-muted-foreground mt-2 text-base">
-            Hai domande sui percorsi di studio, preparazione esami o necessità particolari? Compila
-            il modulo o utilizza i recapiti sottostanti.
-          </p>
-        </div>
+    <PublicLayout isAuthenticated={isAuthenticated} maxWidth="6xl">
+      <div className="text-center max-w-2xl mx-auto mb-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+          Contatta il Docente
+        </h1>
+        <p className="text-muted-foreground mt-2 text-base">
+          Hai domande sui percorsi di studio, preparazione esami o necessità particolari? Compila
+          il modulo o utilizza i recapiti sottostanti.
+        </p>
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* COLONNA SINISTRA: Informazioni e Recapiti */}
@@ -51,7 +48,7 @@ export default async function ContattiPage() {
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                     Docente
                   </span>
-                  <h2 className="text-xl font-bold text-text mt-0.5">{professorName}</h2>
+                  <h2 className="text-xl font-bold text-foreground mt-0.5">{professorName}</h2>
                 </div>
 
                 {subjects.length > 0 && (
@@ -80,7 +77,7 @@ export default async function ContattiPage() {
                     </div>
                     <div>
                       <span className="text-xs text-muted-foreground block">Email diretta</span>
-                      <a href={`mailto:${email}`} className="text-text font-medium hover:underline">
+                      <a href={`mailto:${email}`} className="text-foreground font-medium hover:underline">
                         {email}
                       </a>
                     </div>
@@ -93,7 +90,7 @@ export default async function ContattiPage() {
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground block">Telefono / WhatsApp</span>
-                        <a href={`tel:${phone}`} className="text-text font-medium hover:underline">
+                        <a href={`tel:${phone}`} className="text-foreground font-medium hover:underline">
                           {phone}
                         </a>
                       </div>
@@ -106,7 +103,7 @@ export default async function ContattiPage() {
                     </div>
                     <div>
                       <span className="text-xs text-muted-foreground block">Tempo di Risposta</span>
-                      <span className="text-text font-medium">Entro 24 ore lavorative</span>
+                      <span className="text-foreground font-medium">Entro 24 ore lavorative</span>
                     </div>
                   </div>
                 </div>
@@ -127,7 +124,7 @@ export default async function ContattiPage() {
             {/* BOX RAPIDO PRENOTAZIONE */}
             <Card className="border-border bg-muted/30 shadow-sm">
               <CardContent className="p-6 space-y-3">
-                <div className="flex items-center gap-2 text-text font-bold text-base">
+                <div className="flex items-center gap-2 text-foreground font-bold text-base">
                   <CalendarIcon className="w-5 h-5 text-primary" />
                   Preferisci prenotare direttamente?
                 </div>
@@ -150,8 +147,6 @@ export default async function ContattiPage() {
             <ContactForm />
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+    </PublicLayout>
   );
 }

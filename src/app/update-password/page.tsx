@@ -1,15 +1,17 @@
-import { PublicNavbar } from "@/features/landing/components/PublicNavbar";
-import { Footer } from "@/features/landing/components/Footer";
+import { PublicLayout } from "@/features/landing/components/PublicLayout";
 import { UpdatePasswordForm } from "@/features/auth/components/UpdatePasswordForm";
+import { getPublicProfessorProfile } from "@/features/landing/utils/get-public-profile";
 
-export default function UpdatePasswordPage() {
+export const dynamic = "force-dynamic";
+
+export default async function UpdatePasswordPage() {
+  const { isAuthenticated } = await getPublicProfessorProfile();
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <PublicNavbar />
-      <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+    <PublicLayout isAuthenticated={isAuthenticated} maxWidth="4xl">
+      <div className="flex items-center justify-center py-6">
         <UpdatePasswordForm />
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </PublicLayout>
   );
 }
