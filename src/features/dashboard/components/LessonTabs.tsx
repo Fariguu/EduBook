@@ -29,18 +29,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import dynamic from "next/dynamic";
 import type { DashboardData, DashboardLesson, ContactMessage } from "../types/dashboard.types";
 import { removeAvailableSlot, runManualCleanup } from "../actions/dashboard.actions";
 import { deleteContactMessage } from "@/features/contact/actions/contact.actions";
-import { CreateSlotDialog } from "./CreateSlotDialog";
-import { EditLessonDialog } from "./EditLessonDialog";
-import { RejectLessonDialog } from "./RejectLessonDialog";
-import { CancelLessonDialog } from "./CancelLessonDialog";
-import { ConfirmLessonDialog } from "./ConfirmLessonDialog";
 import { LessonCardItem } from "./LessonCardItem";
 
+const CreateSlotDialog = dynamic(
+  () => import("./CreateSlotDialog").then((mod) => mod.CreateSlotDialog)
+);
+const EditLessonDialog = dynamic(
+  () => import("./EditLessonDialog").then((mod) => mod.EditLessonDialog)
+);
+const RejectLessonDialog = dynamic(
+  () => import("./RejectLessonDialog").then((mod) => mod.RejectLessonDialog)
+);
+const CancelLessonDialog = dynamic(
+  () => import("./CancelLessonDialog").then((mod) => mod.CancelLessonDialog)
+);
+const ConfirmLessonDialog = dynamic(
+  () => import("./ConfirmLessonDialog").then((mod) => mod.ConfirmLessonDialog)
+);
+
 interface LessonTabsProps {
-  data: DashboardData;
+  readonly data: DashboardData;
 }
 
 export function LessonTabs({ data }: LessonTabsProps) {

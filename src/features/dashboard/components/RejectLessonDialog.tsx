@@ -17,10 +17,10 @@ import { rejectLesson } from "../actions/dashboard.actions";
 import { DialogActionFooter } from "./DialogActionFooter";
 
 interface RejectLessonDialogProps {
-  lessonId: string;
-  guestName?: string | null;
-  guestEmail?: string | null;
-  trigger?: React.ReactNode;
+  readonly lessonId: string;
+  readonly guestName?: string | null;
+  readonly guestEmail?: string | null;
+  readonly trigger?: React.ReactNode;
 }
 
 export function RejectLessonDialog({
@@ -28,12 +28,12 @@ export function RejectLessonDialog({
   guestName,
   guestEmail,
   trigger,
-}: RejectLessonDialogProps) {
+}: Readonly<RejectLessonDialogProps>) {
   const [open, setOpen] = React.useState(false);
   const [reason, setReason] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -62,14 +62,26 @@ export function RejectLessonDialog({
 
   return (
     <>
-      <span onClick={() => setOpen(true)} className="inline-block cursor-pointer">
-        {trigger || (
-          <Button type="button" variant="outline" size="sm" className="text-xs text-destructive hover:bg-destructive/10">
-            <XCircleIcon className="w-3.5 h-3.5 mr-1" />
-            Rifiuta
-          </Button>
-        )}
-      </span>
+      {trigger ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-block cursor-pointer bg-transparent border-none p-0 text-left font-normal"
+        >
+          {trigger}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className="text-xs text-destructive hover:bg-destructive/10"
+        >
+          <XCircleIcon className="w-3.5 h-3.5 mr-1" />
+          Rifiuta
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">

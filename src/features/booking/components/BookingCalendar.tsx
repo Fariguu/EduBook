@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { format, isBefore, startOfToday } from "date-fns";
@@ -34,14 +34,14 @@ import {
 import { bookLesson } from "../actions/booking.actions";
 
 interface BookingCalendarProps {
-  initialSlots: AvailableSlot[];
-  professorName?: string;
+  readonly initialSlots: AvailableSlot[];
+  readonly professorName?: string;
 }
 
 export function BookingCalendar({
   initialSlots,
   professorName = "Professore",
-}: BookingCalendarProps) {
+}: Readonly<BookingCalendarProps>) {
   const [slots, setSlots] = React.useState<AvailableSlot[]>(initialSlots);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = React.useState<AvailableSlot | null>(null);
@@ -100,7 +100,7 @@ export function BookingCalendar({
   };
 
   // Submit della prenotazione
-  const handleSubmitBooking = async (e: React.FormEvent) => {
+  const handleSubmitBooking = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!selectedSlot || !selectedInterval) {
@@ -247,6 +247,250 @@ export function BookingCalendar({
 
   const today = startOfToday();
 
+  const renderRightPanelContent = () => {
+    if (!selectedDate) {
+      return (
+        <motion.div
+          key="no-date"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <Card className="border-dashed border-border bg-muted/20 text-center p-8">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
+              <CalendarIcon className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-foreground text-base">Nessuna data selezionata</h3>
+            <p className="text-muted-foreground text-sm mt-1 max-w-sm mx-auto">
+              Clicca su un giorno nel calendario a sinistra per visualizzare le fasce orarie
+              disponibili.
+            </p>
+          </Card>
+        </motion.div>
+      );
+    }
+
+    if (slotsForSelectedDay.length === 0) {
+      return (
+        <motion.div
+          key="no-slots"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <Card className="border-border text-center p-8">
+            <h3 className="font-semibold text-foreground text-base">Nessuna disponibilità</h3>
+            <p className="text-muted-foreground text-sm mt-1">
+              Non ci sono slot disponibili per{" "}
+              <strong>{format(selectedDate, "d MMMM yyyy", { locale: it })}</strong>. Scegli
+              un altro giorno con il punto verde.
+            </p>
+          </Card>
+        </motion.div>
+      );
+    }
+
+    return (
+      <motion.div
+        key={selectedDate.toISOString()}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        className="space-y-6"
+      >
+        {/* 1. SELEZIONE DELLO SLOT */}
+        <Card className="border-border shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-bold text-foreground capitalize">
+                {format(selectedDate, "EEEE d MMMM yyyy", { locale: it })}
+              </CardTitle>
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                {slotsForSelectedDay.length} {slotsForSelectedDay.length === 1 ? "slot disponibile" : "slot disponibili"}
+              </Badge>
+            </div>
+            <CardDescription>
+              Scegli la fascia oraria di disponibilità che preferisci:
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {slotsForSelectedDay.map((slot) => {
+                const isSelected = selectedSlot?.id === slot.id;
+                const startFormatted = format(new Date(slot.start_time), "HH:mm");
+                const endFormatted = format(new Date(slot.end_time), "HH:mm");
+
+                return (
+                  <button
+                    key={slot.id}
+                    type="button"
+                    onClick={() => handleSelectSlot(slot)}
+                    className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+                        : "border-border hover:border-primary/40 bg-card text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <ClockIcon
+                        className={`w-4 h-4 ${
+                          isSelected ? "text-primary" : "text-muted-foreground"
+                        }`}
+                      />
+                      <span className="font-semibold text-sm">
+                        {startFormatted} - {endFormatted}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Disponibile</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Partizionamento Mega-Slot */}
+            {selectedSlot && intervalOptions.length > 1 && (
+              <div className="pt-3 border-t border-border space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Durata ed orario della tua lezione (Mega-Slot frazionabile):
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {intervalOptions.map((opt) => {
+                    const isOptSelected =
+                      selectedInterval?.startTime === opt.startTime &&
+                      selectedInterval?.endTime === opt.endTime;
+                    return (
+                      <button
+                        key={`${opt.startTime}-${opt.endTime}`}
+                        type="button"
+                        onClick={() => setSelectedInterval(opt)}
+                        className={`px-3 py-2 rounded-md border text-xs font-medium text-left transition-all ${
+                          isOptSelected
+                            ? "bg-primary text-white border-primary shadow-sm"
+                            : "bg-muted/40 hover:bg-muted border-border text-foreground"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 2. FORM DATI GUEST (Nome, Email, Note, Turnstile) */}
+        {selectedSlot && selectedInterval && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Card className="border-border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  Dati per la prenotazione
+                </CardTitle>
+                <CardDescription>
+                  Prenotazione per: <strong>{selectedInterval.label}</strong> del{" "}
+                  <strong>{format(selectedDate, "d MMMM", { locale: it })}</strong>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form noValidate onSubmit={handleSubmitBooking} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="guestName" className="text-sm font-medium">
+                      Nome e Cognome <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <UserIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
+                      <Input
+                        id="guestName"
+                        placeholder="Mario Rossi"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        className="pl-9"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="guestEmail" className="text-sm font-medium">
+                      Indirizzo Email <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <MailIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
+                      <Input
+                        id="guestEmail"
+                        type="email"
+                        placeholder="mario.rossi@email.it"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        className="pl-9"
+                        required
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Riceverai qui la conferma e il link privato per gestire la lezione.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="notes" className="text-sm font-medium">
+                      Note o argomenti da trattare (opzionale)
+                    </Label>
+                    <div className="relative">
+                      <FileTextIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
+                      <Textarea
+                        id="notes"
+                        placeholder="Es. Preparazione esame Analisi 1, esercizi sulle derivate..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="pl-9 min-h-[80px]"
+                        maxLength={500}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Turnstile Anti-Spam */}
+                  <div className="py-2 flex justify-center">
+                    <Turnstile
+                      siteKey={turnstileSiteKey}
+                      onSuccess={(token) => setTurnstileToken(token)}
+                      onError={() => setTurnstileToken(null)}
+                      onExpire={() => setTurnstileToken(null)}
+                      options={{
+                        theme: "auto",
+                        size: "flexible",
+                      }}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-primary text-white hover:bg-primary/90 h-11 text-base font-semibold"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        <span>Registrazione in corso...</span>
+                      </span>
+                    ) : (
+                      "Invia Richiesta di Prenotazione"
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto py-4">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -270,13 +514,12 @@ export function BookingCalendar({
                 locale={it}
                 disabled={(date) => isBefore(date, today)}
                 modifiers={{
-                  hasSlots: availableDays,
+                  available: availableDays,
                 }}
                 modifiersClassNames={{
-                  hasSlots:
-                    "font-bold text-primary relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-2 after:h-2 after:bg-primary after:rounded-full",
+                  available: "font-bold text-primary relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-primary after:rounded-full",
                 }}
-                className="w-full max-w-md [--cell-size:2.85rem] text-base"
+                className="rounded-md border-0 pointer-events-auto"
               />
             </CardContent>
           </Card>
@@ -285,239 +528,7 @@ export function BookingCalendar({
         {/* COLONNA DESTRA: Slot orari e Modulo Prenotazione */}
         <div className="lg:col-span-6">
           <AnimatePresence mode="wait">
-            {!selectedDate ? (
-              <motion.div
-                key="no-date"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <Card className="border-dashed border-border bg-muted/20 text-center p-8">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
-                    <CalendarIcon className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-semibold text-foreground text-base">Nessuna data selezionata</h3>
-                  <p className="text-muted-foreground text-sm mt-1 max-w-sm mx-auto">
-                    Clicca su un giorno nel calendario a sinistra per visualizzare le fasce orarie
-                    disponibili.
-                  </p>
-                </Card>
-              </motion.div>
-            ) : slotsForSelectedDay.length === 0 ? (
-              <motion.div
-                key="no-slots"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <Card className="border-border text-center p-8">
-                  <h3 className="font-semibold text-foreground text-base">Nessuna disponibilità</h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Non ci sono slot disponibili per{" "}
-                    <strong>{format(selectedDate, "d MMMM yyyy", { locale: it })}</strong>. Scegli
-                    un altro giorno con il punto verde.
-                  </p>
-                </Card>
-              </motion.div>
-            ) : (
-              <motion.div
-                key={selectedDate.toISOString()}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                {/* 1. SELEZIONE DELLO SLOT */}
-                <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-bold text-foreground capitalize">
-                        {format(selectedDate, "EEEE d MMMM yyyy", { locale: it })}
-                      </CardTitle>
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        {slotsForSelectedDay.length} {slotsForSelectedDay.length === 1 ? "slot" : "slot"}
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      Scegli la fascia oraria di disponibilità che preferisci:
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {slotsForSelectedDay.map((slot) => {
-                        const isSelected = selectedSlot?.id === slot.id;
-                        const startFormatted = format(new Date(slot.start_time), "HH:mm");
-                        const endFormatted = format(new Date(slot.end_time), "HH:mm");
-
-                        return (
-                          <button
-                            key={slot.id}
-                            type="button"
-                            onClick={() => handleSelectSlot(slot)}
-                            className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
-                              isSelected
-                                ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
-                                : "border-border hover:border-primary/40 bg-card text-foreground"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <ClockIcon
-                                className={`w-4 h-4 ${
-                                  isSelected ? "text-primary" : "text-muted-foreground"
-                                }`}
-                              />
-                              <span className="font-semibold text-sm">
-                                {startFormatted} - {endFormatted}
-                              </span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">Disponibile</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Partizionamento Mega-Slot */}
-                    {selectedSlot && intervalOptions.length > 1 && (
-                      <div className="pt-3 border-t border-border space-y-2">
-                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          Durata ed orario della tua lezione (Mega-Slot frazionabile):
-                        </Label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {intervalOptions.map((opt, idx) => {
-                            const isOptSelected =
-                              selectedInterval?.startTime === opt.startTime &&
-                              selectedInterval?.endTime === opt.endTime;
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setSelectedInterval(opt)}
-                                className={`px-3 py-2 rounded-md border text-xs font-medium text-left transition-all ${
-                                  isOptSelected
-                                    ? "bg-primary text-white border-primary shadow-sm"
-                                    : "bg-muted/40 hover:bg-muted border-border text-foreground"
-                                }`}
-                              >
-                                {opt.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* 2. FORM DATI GUEST (Nome, Email, Note, Turnstile) */}
-                {selectedSlot && selectedInterval && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Card className="border-border shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                          <UserIcon className="w-4 h-4 text-primary" />
-                          Dati per la prenotazione
-                        </CardTitle>
-                        <CardDescription>
-                          Prenotazione per: <strong>{selectedInterval.label}</strong> del{" "}
-                          <strong>{format(selectedDate, "d MMMM", { locale: it })}</strong>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <form noValidate onSubmit={handleSubmitBooking} className="space-y-4">
-                          <div className="space-y-1.5">
-                            <Label htmlFor="guestName" className="text-sm font-medium">
-                              Nome e Cognome <span className="text-destructive">*</span>
-                            </Label>
-                            <div className="relative">
-                              <UserIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
-                              <Input
-                                id="guestName"
-                                placeholder="Mario Rossi"
-                                value={guestName}
-                                onChange={(e) => setGuestName(e.target.value)}
-                                className="pl-9"
-                                required
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="guestEmail" className="text-sm font-medium">
-                              Indirizzo Email <span className="text-destructive">*</span>
-                            </Label>
-                            <div className="relative">
-                              <MailIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
-                              <Input
-                                id="guestEmail"
-                                type="email"
-                                placeholder="mario.rossi@email.it"
-                                value={guestEmail}
-                                onChange={(e) => setGuestEmail(e.target.value)}
-                                className="pl-9"
-                                required
-                              />
-                            </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              Riceverai qui la conferma e il link privato per gestire la lezione.
-                            </p>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label htmlFor="notes" className="text-sm font-medium">
-                              Note o argomenti da trattare (opzionale)
-                            </Label>
-                            <div className="relative">
-                              <FileTextIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
-                              <Textarea
-                                id="notes"
-                                placeholder="Es. Preparazione esame Analisi 1, esercizi sulle derivate..."
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                className="pl-9 min-h-[80px]"
-                                maxLength={500}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Turnstile Anti-Spam */}
-                          <div className="py-2 flex justify-center">
-                            <Turnstile
-                              siteKey={turnstileSiteKey}
-                              onSuccess={(token) => setTurnstileToken(token)}
-                              onError={() => setTurnstileToken(null)}
-                              onExpire={() => setTurnstileToken(null)}
-                              options={{
-                                theme: "auto",
-                                size: "flexible",
-                              }}
-                            />
-                          </div>
-
-                          <Button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full bg-primary text-white hover:bg-primary/90 h-11 text-base font-semibold"
-                          >
-                            {isSubmitting ? (
-                              <span className="flex items-center gap-2">
-                                <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                                Registrazione in corso...
-                              </span>
-                            ) : (
-                              "Invia Richiesta di Prenotazione"
-                            )}
-                          </Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
+            {renderRightPanelContent()}
           </AnimatePresence>
         </div>
       </div>

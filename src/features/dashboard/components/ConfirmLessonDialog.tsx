@@ -32,7 +32,7 @@ export function ConfirmLessonDialog({
   startTime,
   endTime,
   trigger,
-}: ConfirmLessonDialogProps) {
+}: Readonly<ConfirmLessonDialogProps>) {
   const [open, setOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -40,7 +40,7 @@ export function ConfirmLessonDialog({
   const end = new Date(endTime);
   const displayName = guestName || "lo studente";
 
-  const handleConfirm = async (e: React.FormEvent) => {
+  const handleConfirm = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
