@@ -1,6 +1,8 @@
-﻿import { Metadata } from "next";
+import { Metadata } from "next";
 import { getProfile } from "@/features/profile/actions/profile.actions";
 import { ProfileForm } from "@/features/profile/components/ProfileForm";
+import { WhyChooseUsCard } from "@/features/profile/components/WhyChooseUsCard";
+import { HeroCardConfigCard } from "@/features/profile/components/HeroCardConfigCard";
 import { CredentialsCard } from "@/features/profile/components/CredentialsCard";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -37,6 +39,12 @@ export default async function ProfiloPage() {
       </div>
 
       <ProfileForm initialProfile={profile} />
+
+      {/* Personalizzazione Card Informativa Hero */}
+      <HeroCardConfigCard initialData={profile?.hero_card} />
+
+      {/* Personalizzazione Sezione "Gestione Percorso" */}
+      <WhyChooseUsCard initialData={profile?.why_choose_us} />
 
       {/* Sezione Credenziali di Accesso e Sicurezza */}
       <CredentialsCard initialEmail={profile?.authEmail || profile?.email || ""} />
