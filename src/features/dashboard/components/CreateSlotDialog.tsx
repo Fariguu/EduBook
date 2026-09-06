@@ -115,7 +115,7 @@ export function CreateSlotDialog() {
             />
 
             <p className="text-[11px] text-muted-foreground">
-              💡 Se imposti una durata superiore a 1 ora (es. 14:00 - 18:00), il sistema lo tratterà come
+              Nota: Se imposti una durata superiore a 1 ora (es. 14:00 - 18:00), il sistema lo tratterà come
               Mega-Slot frazionabile dagli studenti.
             </p>
 

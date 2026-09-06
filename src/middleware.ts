@@ -8,6 +8,12 @@ export async function middleware(request: NextRequest) {
 
   // Route protection logic
   if (url.pathname.startsWith("/dashboard")) {
+    // If authenticated via demo sandbox session, allow access directly
+    const isDemoAuth = request.cookies.get("edubook_demo_auth")?.value === "true";
+    if (isDemoAuth) {
+      return supabaseResponse;
+    }
+
     // If not logged in, redirect to homepage with auth modal query param
     if (!user) {
       url.pathname = "/";

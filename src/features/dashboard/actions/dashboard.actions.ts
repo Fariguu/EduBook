@@ -22,6 +22,7 @@ import {
   lessonCancelledStudentEmail,
 } from "@/lib/email-templates";
 import { addWeeks, differenceInWeeks, subDays } from "date-fns";
+import { getDemoSessionId } from "@/lib/demo-session";
 import {
   fetchLessonById,
   formatLessonDates,
@@ -36,6 +37,7 @@ import {
  */
 export async function getDashboardData(): Promise<DashboardData> {
   const { profile } = await requireAuth();
+  const sessionId = await getDemoSessionId();
   const admin = createAdminClient();
 
   const nowIso = new Date().toISOString();
@@ -43,28 +45,32 @@ export async function getDashboardData(): Promise<DashboardData> {
   // Query in parallelo per massima reattività
   const [pendingRes, confirmedRes, availableRes, contactsRes] = await Promise.all([
     admin
-      .from("lessons")
+      .from("lessons_demo")
       .select("*")
+      .eq("session_id", sessionId)
       .eq("status", "pending")
       .order("start_time", { ascending: true }),
 
     admin
-      .from("lessons")
+      .from("lessons_demo")
       .select("*")
+      .eq("session_id", sessionId)
       .eq("status", "confirmed")
       .order("start_time", { ascending: true }),
 
     admin
-      .from("lessons")
+      .from("lessons_demo")
       .select("*")
+      .eq("session_id", sessionId)
       .eq("status", "available")
       .eq("is_available", true)
       .gte("start_time", nowIso)
       .order("start_time", { ascending: true }),
 
     admin
-      .from("contacts")
+      .from("contacts_demo")
       .select("*")
+      .eq("session_id", sessionId)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -96,11 +102,13 @@ export async function getDashboardData(): Promise<DashboardData> {
 async function createSingleSlot(
   admin: ReturnType<typeof createAdminClient>,
   startInitial: Date,
-  endInitial: Date
+  endInitial: Date,
+  sessionId: string
 ): Promise<DashboardActionResult> {
   const { data: overlapping } = await admin
-    .from("lessons")
+    .from("lessons_demo")
     .select("id")
+    .eq("session_id", sessionId)
     .in("status", ["available", "pending", "confirmed"])
     .lt("start_time", endInitial.toISOString())
     .gt("end_time", startInitial.toISOString())
@@ -113,7 +121,8 @@ async function createSingleSlot(
     };
   }
 
-  const { error } = await admin.from("lessons").insert({
+  const { error } = await admin.from("lessons_demo").insert({
+    session_id: sessionId,
     start_time: startInitial.toISOString(),
     end_time: endInitial.toISOString(),
     status: "available",
@@ -134,7 +143,8 @@ async function createRecurringSlots(
   admin: ReturnType<typeof createAdminClient>,
   startInitial: Date,
   endInitial: Date,
-  recurrenceEndDate: string
+  recurrenceEndDate: string,
+  sessionId: string
 ): Promise<DashboardActionResult> {
   const recEnd = new Date(recurrenceEndDate);
   recEnd.setHours(23, 59, 59, 999);
@@ -149,8 +159,9 @@ async function createRecurringSlots(
     if (curStart.getTime() > recEnd.getTime()) break;
 
     const { data: overlapping } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .select("id")
+      .eq("session_id", sessionId)
       .in("status", ["available", "pending", "confirmed"])
       .lt("start_time", curEnd.toISOString())
       .gt("end_time", curStart.toISOString())
@@ -158,6 +169,7 @@ async function createRecurringSlots(
 
     if (!overlapping || overlapping.length === 0) {
       slotsToInsert.push({
+        session_id: sessionId,
         start_time: curStart.toISOString(),
         end_time: curEnd.toISOString(),
         status: "available",
@@ -173,7 +185,7 @@ async function createRecurringSlots(
     };
   }
 
-  const { error } = await admin.from("lessons").insert(slotsToInsert);
+  const { error } = await admin.from("lessons_demo").insert(slotsToInsert);
 
   if (error) {
     console.error("[createSlot] Errore inserimento batch ricorrente:", error);
@@ -190,6 +202,7 @@ async function createRecurringSlots(
  */
 export async function createSlot(input: CreateSlotInput): Promise<DashboardActionResult> {
   await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const validation = createSlotSchema.safeParse(input);
   if (!validation.success) {
@@ -226,10 +239,10 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
     }
 
     if (!isRecurring || !recurrenceEndDate) {
-      return await createSingleSlot(admin, startInitial, endInitial);
+      return await createSingleSlot(admin, startInitial, endInitial, sessionId);
     }
 
-    return await createRecurringSlots(admin, startInitial, endInitial, recurrenceEndDate);
+    return await createRecurringSlots(admin, startInitial, endInitial, recurrenceEndDate, sessionId);
   } catch (err) {
     console.error("[createSlot] Errore inatteso:", err);
     return { success: false, error: "Errore imprevisto durante la creazione." };
@@ -241,14 +254,16 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
  */
 export async function removeAvailableSlot(slotId: string): Promise<DashboardActionResult> {
   await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const admin = createAdminClient();
 
   try {
     const { error } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .delete()
       .eq("id", slotId)
+      .eq("session_id", sessionId)
       .eq("status", "available");
 
     if (error) {
@@ -270,6 +285,7 @@ export async function removeAvailableSlot(slotId: string): Promise<DashboardActi
  */
 export async function confirmLesson(lessonId: string): Promise<DashboardActionResult> {
   const { profile } = await requireAuth();
+  const sessionId = await getDemoSessionId();
   const admin = createAdminClient();
 
   try {
@@ -279,12 +295,13 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
     }
 
     const { error: updateErr } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .update({
         status: "confirmed",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", lessonId);
+      .eq("id", lessonId)
+      .eq("session_id", sessionId);
 
     if (updateErr) {
       console.error("[confirmLesson] Errore update:", updateErr);
@@ -305,7 +322,7 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
 
         await sendEmail({
           to: lesson.guest_email,
-          subject: "🎉 La tua lezione è confermata! - EduBook",
+          subject: "La tua lezione e confermata - EduBook",
           html: lessonConfirmedStudentEmail({
             guestName: lesson.guest_name || "Studente",
             formattedDate,
@@ -389,6 +406,7 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
  */
 export async function updateLessonTime(input: EditLessonTimeInput): Promise<DashboardActionResult> {
   const { profile } = await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const validation = editLessonTimeSchema.safeParse(input);
   if (!validation.success) {
@@ -424,8 +442,9 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
 
     // Verifica che il nuovo orario non si sovrapponga a un'altra lezione confermata
     const { data: colliding } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .select("id")
+      .eq("session_id", sessionId)
       .eq("status", "confirmed")
       .neq("id", lessonId)
       .lt("start_time", endObj.toISOString())
@@ -440,7 +459,7 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
     }
 
     const { error: updateErr } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .update({
         start_time: startObj.toISOString(),
         end_time: endObj.toISOString(),
@@ -448,7 +467,8 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
         reschedule_notes: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", lessonId);
+      .eq("id", lessonId)
+      .eq("session_id", sessionId);
 
     if (updateErr) {
       console.error("[updateLessonTime] Errore aggiornamento orario:", updateErr);
@@ -495,6 +515,7 @@ export async function cancelLessonWithChoice(
   input: CancelLessonInput
 ): Promise<DashboardActionResult> {
   await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const validation = cancelLessonSchema.safeParse(input);
   if (!validation.success) {
@@ -526,9 +547,10 @@ export async function cancelLessonWithChoice(
       }
     } else {
       const { error: deleteErr } = await admin
-        .from("lessons")
+        .from("lessons_demo")
         .delete()
-        .eq("id", lessonId);
+        .eq("id", lessonId)
+        .eq("session_id", sessionId);
 
       if (deleteErr) {
         console.error("[cancelLessonWithChoice] Errore delete:", deleteErr);
@@ -571,14 +593,16 @@ export async function runManualCleanup(): Promise<{
 }> {
   try {
     await requireAuth();
+    const sessionId = await getDemoSessionId();
     const admin = createAdminClient();
     const nowIso = new Date().toISOString();
     const cutoff365 = subDays(new Date(), 365).toISOString();
 
     // 1. Elimina slot liberi passati
     const { data: deletedAvailable, error: errAvailable } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .delete()
+      .eq("session_id", sessionId)
       .eq("status", "available")
       .lt("end_time", nowIso)
       .select("id");
@@ -587,8 +611,9 @@ export async function runManualCleanup(): Promise<{
 
     // 2. Elimina richieste in attesa scadute
     const { data: cancelledPending, error: errPending } = await admin
-      .from("lessons")
+      .from("lessons_demo")
       .delete()
+      .eq("session_id", sessionId)
       .eq("status", "pending")
       .lt("end_time", nowIso)
       .select("id");
@@ -597,8 +622,9 @@ export async function runManualCleanup(): Promise<{
 
     // 3. Elimina lezioni archiviate vecchie (>365gg)
     await admin
-      .from("lessons")
+      .from("lessons_demo")
       .delete()
+      .eq("session_id", sessionId)
       .lt("end_time", cutoff365);
 
     const deletedSlots = deletedAvailable ? deletedAvailable.length : 0;

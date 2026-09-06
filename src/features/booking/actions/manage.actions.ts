@@ -24,7 +24,7 @@ export async function getLessonById(id: string): Promise<Lesson | null> {
     const adminClient = createAdminClient();
 
     const { data, error } = await adminClient
-      .from("lessons")
+      .from("lessons_demo")
       .select(
         "id, start_time, end_time, is_available, status, guest_name, guest_email, notes, reschedule_requested, reschedule_notes, created_at, updated_at"
       )
@@ -69,7 +69,7 @@ export async function requestReschedule(input: RescheduleSchemaInput): Promise<R
 
     // 3. Verifica esistenza lezione
     const { data: lesson, error: fetchError } = await adminClient
-      .from("lessons")
+      .from("lessons_demo")
       .select("id, start_time, end_time, guest_name, guest_email, reschedule_requested")
       .eq("id", lessonId)
       .maybeSingle();
@@ -90,7 +90,7 @@ export async function requestReschedule(input: RescheduleSchemaInput): Promise<R
 
     // 4. Aggiorna lo stato della lezione
     const { error: updateError } = await adminClient
-      .from("lessons")
+      .from("lessons_demo")
       .update({
         reschedule_requested: true,
         reschedule_notes: rescheduleNotes,
@@ -108,12 +108,12 @@ export async function requestReschedule(input: RescheduleSchemaInput): Promise<R
 
     // 5. Invia notifica email al professore
     const { data: profProfile } = await adminClient
-      .from("profiles")
+      .from("profiles_demo")
       .select("email")
       .limit(1)
       .maybeSingle();
 
-    const profEmail = profProfile?.email || process.env.PROFESSOR_NOTIFICATION_EMAIL || "info@edubook.it";
+    const profEmail = profProfile?.email || process.env.PROFESSOR_NOTIFICATION_EMAIL || "mario.rossi@edubook.it";
 
     const startDate = new Date(lesson.start_time);
     const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
@@ -121,7 +121,7 @@ export async function requestReschedule(input: RescheduleSchemaInput): Promise<R
 
     await sendEmail({
       to: profEmail,
-      subject: `⚠️ Richiesta Spostamento Lezione da ${lesson.guest_name || "Studente"}`,
+      subject: `Richiesta Spostamento Lezione da ${lesson.guest_name || "Studente"}`,
       html: rescheduleRequestEmail({
         guestName: lesson.guest_name || "Studente Guest",
         guestEmail: lesson.guest_email || "Nessuna email fornita",

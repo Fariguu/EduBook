@@ -1,4 +1,6 @@
-import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { createAdminClient } from "@/utils/supabase/server";
+import { getDemoSessionId, DEMO_AUTH_COOKIE } from "@/lib/demo-session";
 import {
   DEFAULT_WHY_CHOOSE_US,
   type WhyChooseUsData,
@@ -35,13 +37,18 @@ interface RawProfileData {
 }
 
 const DEFAULT_PROFILE: Omit<PublicProfessorProfile, "isAuthenticated"> = {
-  professorName: "Prof. Gabriele Farigu",
-  headline: "Docente di Scienze Matematiche",
-  email: "info@edubook.it",
-  phone: null,
-  bio: "Docente qualificato con pluriennale esperienza nell'insegnamento di Matematica, Fisica e Analisi. Metodo personalizzato per scuola superiore e università.",
-  subjects: ["Matematica", "Fisica", "Analisi 1"],
-  subjectDetails: {},
+  professorName: "Prof. Mario Rossi",
+  headline: "Docente di Matematica e Fisica per Scuole Superiori e Universita",
+  email: "mario.rossi@edubook.it",
+  phone: "+39 340 1234567",
+  bio: "Laureato con lode in Fisica Applicata, da oltre 8 anni supporto studenti di scuola superiore e universita nel superamento di debiti formativi ed esami universitari. Metodo pratico, personalizzato e orientato alla risoluzione autonoma dei problemi. Lezioni sia online con tavoletta grafica che in presenza.",
+  subjects: ["Matematica", "Fisica", "Analisi 1", "Chimica"],
+  subjectDetails: {
+    Matematica: "Algebra, Geometria Analitica, Trigonometria, Goniometria e Studio di Funzione per scuole superiori.",
+    Fisica: "Meccanica classica, Termodinamica, Elettromagnetismo e Ottica.",
+    "Analisi 1": "Limiti, Derivate, Integrali definiti e indefiniti, Serie numeriche ed Equazioni Differenziali.",
+    Chimica: "Stechiometria, Struttura atomica, Legami chimici e Reazioni acido-base.",
+  },
   whyChooseUs: DEFAULT_WHY_CHOOSE_US,
   heroCard: DEFAULT_HERO_CARD,
 };
@@ -102,20 +109,29 @@ function parseProfile(profile: RawProfileData | null): Omit<PublicProfessorProfi
 
 export async function getPublicProfessorProfile(): Promise<PublicProfessorProfile> {
   try {
-    const supabase = await createClient();
+    const cookieStore = await cookies();
+    const isDemoAuth = cookieStore.get(DEMO_AUTH_COOKIE)?.value === "true";
+    const sessionId = await getDemoSessionId();
+    const admin = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    const { data: profile } = await supabase
-      .from("profiles")
+    let { data: profile } = await admin
+      .from("profiles_demo")
       .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, why_choose_us, hero_card")
-      .limit(1)
+      .eq("session_id", sessionId)
       .maybeSingle();
 
+    if (!profile) {
+      await admin.rpc("seed_demo_session", { p_session_id: sessionId });
+      const seeded = await admin
+        .from("profiles_demo")
+        .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, why_choose_us, hero_card")
+        .eq("session_id", sessionId)
+        .maybeSingle();
+      profile = seeded.data;
+    }
+
     return {
-      isAuthenticated: Boolean(user),
+      isAuthenticated: isDemoAuth,
       ...parseProfile(profile),
     };
   } catch (err) {

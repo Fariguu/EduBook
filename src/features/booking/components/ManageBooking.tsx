@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { format } from "date-fns";
@@ -16,6 +16,7 @@ import {
   CalendarPlusIcon,
   ArrowLeftIcon,
   HelpCircleIcon,
+  CheckIcon,
 } from "lucide-react";
 import Link from "next/link";
 import type { Lesson } from "../types/booking.types";
@@ -70,12 +71,14 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
 
             <div>
               {currentLesson.status === "confirmed" ? (
-                <Badge className="bg-primary text-white hover:bg-primary px-3 py-1 text-xs">
-                  ✓ Confermata dal Docente
+                <Badge className="bg-primary text-white hover:bg-primary px-3 py-1 text-xs gap-1">
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  Confermata dal Docente
                 </Badge>
               ) : currentLesson.status === "pending" ? (
-                <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-500/20 px-3 py-1 text-xs">
-                  ⏳ In Attesa di Conferma
+                <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-500/20 px-3 py-1 text-xs gap-1">
+                  <ClockIcon className="w-3.5 h-3.5" />
+                  In Attesa di Conferma
                 </Badge>
               ) : (
                 <Badge variant="outline">{currentLesson.status}</Badge>

@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     const adminClient = createAdminClient();
     const cutoffDate = subDays(new Date(), 365).toISOString();
 
-    // Elimina lezioni con end_time antecedente a 365 giorni fa
+    // Elimina lezioni demo con end_time antecedente a 365 giorni fa
     const { data, error } = await adminClient
-      .from("lessons")
+      .from("lessons_demo")
       .delete()
       .lt("end_time", cutoffDate)
       .select("id");

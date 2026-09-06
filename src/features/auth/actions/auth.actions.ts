@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import {
   loginSchema,
@@ -48,6 +48,8 @@ export async function loginWithPassword(input: LoginInput) {
 }
 
 export async function logoutAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete("edubook_demo_auth");
   const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");

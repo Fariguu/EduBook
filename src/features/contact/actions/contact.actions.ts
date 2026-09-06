@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/utils/supabase/server";
+import { getDemoSessionId } from "@/lib/demo-session";
 import { contactSchema, type ContactSchemaInput } from "../schemas/contact.schema";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { sendEmail } from "@/lib/resend";
@@ -35,10 +36,12 @@ export async function sendContactMessage(input: ContactSchemaInput): Promise<Con
       };
     }
 
+    const sessionId = await getDemoSessionId();
     const adminClient = createAdminClient();
 
-    // 3. Salvataggio nel database (tabella contacts)
-    const { error: dbError } = await adminClient.from("contacts").insert({
+    // 3. Salvataggio nel database sandbox (tabella contacts_demo)
+    const { error: dbError } = await adminClient.from("contacts_demo").insert({
+      session_id: sessionId,
       name,
       email,
       message,
@@ -54,13 +57,13 @@ export async function sendContactMessage(input: ContactSchemaInput): Promise<Con
 
     // 4. Invio email di notifica al professore
     const { data: profProfile } = await adminClient
-      .from("profiles")
+      .from("profiles_demo")
       .select("email")
-      .limit(1)
+      .eq("session_id", sessionId)
       .maybeSingle();
 
     const profEmail =
-      profProfile?.email || process.env.PROFESSOR_NOTIFICATION_EMAIL || "info@edubook.it";
+      profProfile?.email || process.env.PROFESSOR_NOTIFICATION_EMAIL || "mario.rossi@edubook.it";
 
     await sendEmail({
       to: profEmail,
@@ -91,10 +94,12 @@ export async function getContactMessages() {
   await requireAuth();
 
   try {
+    const sessionId = await getDemoSessionId();
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from("contacts")
+      .from("contacts_demo")
       .select("*")
+      .eq("session_id", sessionId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -118,11 +123,13 @@ export async function deleteContactMessage(messageId: string): Promise<ContactAc
   await requireAuth();
 
   try {
+    const sessionId = await getDemoSessionId();
     const admin = createAdminClient();
     const { error } = await admin
-      .from("contacts")
+      .from("contacts_demo")
       .delete()
-      .eq("id", messageId);
+      .eq("id", messageId)
+      .eq("session_id", sessionId);
 
     if (error) {
       console.error("[deleteContactMessage] Errore cancellazione:", error);

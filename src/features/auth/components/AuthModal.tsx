@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogIn, KeyRound, Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
+import { LogIn, KeyRound, Loader2, Mail, Lock, ArrowLeft, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import {
   type ResetPasswordInput,
 } from "../schemas/auth.schema";
 import { loginWithPassword, resetPasswordAction } from "../actions/auth.actions";
+import { loginDemoAction } from "@/features/dashboard/actions/demo.actions";
 
 export function AuthModal() {
   const searchParams = useSearchParams();
@@ -33,6 +34,7 @@ export function AuthModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"login" | "forgot">("login");
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   // Sync modal view & open state when URL search param changes
   useEffect(() => {
@@ -98,6 +100,21 @@ export function AuthModal() {
       toast.success(result.message || "Email di reset inviata!");
       resetForgotForm();
       setView("login");
+    }
+  };
+
+  const onDemoSubmit = async () => {
+    setDemoLoading(true);
+    const result = await loginDemoAction();
+    setDemoLoading(false);
+
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Accesso demo effettuato come Prof. Mario Rossi!");
+      setIsOpen(false);
+      router.replace("/dashboard");
+      router.refresh();
     }
   };
 
@@ -167,7 +184,7 @@ export function AuthModal() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 mt-2" disabled={loading}>
+                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 mt-2" disabled={loading || demoLoading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -177,6 +194,35 @@ export function AuthModal() {
                     <>
                       <LogIn className="mr-2 h-4 w-4" />
                       Accedi
+                    </>
+                  )}
+                </Button>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">oppure esplora la demo</span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-primary/30 hover:bg-primary/10 text-primary font-medium"
+                  disabled={demoLoading || loading}
+                  onClick={onDemoSubmit}
+                >
+                  {demoLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Accesso demo in corso...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Entra come Docente Demo (Prof. Mario Rossi)
                     </>
                   )}
                 </Button>

@@ -137,9 +137,9 @@ export function bookingConfirmationEmail({
     <p>Abbiamo ricevuto la tua richiesta di prenotazione per una lezione privata. Il professore esaminerà la tua richiesta al più presto.</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">📅 Data:</span> ${formattedDate}</div>
-      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
-      <div class="card-item"><span class="card-label">📌 Stato:</span> In attesa di conferma</div>
+      <div class="card-item"><span class="card-label">Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      <div class="card-item"><span class="card-label">Stato:</span> In attesa di conferma</div>
     </div>
 
     <p>Puoi consultare lo stato della tua prenotazione o richiedere una modifica in qualsiasi momento cliccando sul pulsante sottostante:</p>
@@ -177,14 +177,14 @@ export function rescheduleRequestEmail({
   lessonId: string;
 }): string {
   const content = `
-    <h2>⚠️ Richiesta Spostamento Lezione</h2>
+    <h2>Richiesta Spostamento Lezione</h2>
     <p>Lo studente <strong>${guestName}</strong> (<a href="mailto:${guestEmail}">${guestEmail}</a>) ha richiesto di spostare la seguente lezione:</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">📅 Data attuale:</span> ${formattedDate}</div>
-      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedTime}</div>
-      <div class="card-item"><span class="card-label">🆔 ID Lezione:</span> <code>${lessonId}</code></div>
-      <div class="card-item" style="margin-top:12px;"><span class="card-label">💬 Motivazione:</span><br>
+      <div class="card-item"><span class="card-label">Data attuale:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">Orario:</span> ${formattedTime}</div>
+      <div class="card-item"><span class="card-label">ID Lezione:</span> <code>${lessonId}</code></div>
+      <div class="card-item" style="margin-top:12px;"><span class="card-label">Motivazione:</span><br>
         <blockquote style="margin:8px 0;padding:10px 14px;background:#ffffff;border-left:3px solid #238626;font-style:italic;">
           "${reason}"
         </blockquote>
@@ -218,9 +218,9 @@ export function contactReceivedEmail({
     <p>Hai ricevuto un nuovo messaggio tramite il modulo di contatto di EduBook:</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">👤 Mittente:</span> <strong>${name}</strong></div>
-      <div class="card-item"><span class="card-label">✉️ Email:</span> <a href="mailto:${email}">${email}</a></div>
-      <div class="card-item" style="margin-top:12px;"><span class="card-label">📝 Messaggio:</span><br>
+      <div class="card-item"><span class="card-label">Mittente:</span> <strong>${name}</strong></div>
+      <div class="card-item"><span class="card-label">Email:</span> <a href="mailto:${email}">${email}</a></div>
+      <div class="card-item" style="margin-top:12px;"><span class="card-label">Messaggio:</span><br>
         <div style="margin-top:8px;padding:12px;background:#ffffff;border-radius:6px;border:1px solid #e0ebd8;white-space:pre-wrap;">
 ${message}
         </div>
@@ -256,14 +256,14 @@ export function lessonConfirmedStudentEmail({
   manageUrl: string;
 }): string {
   const content = `
-    <h2>🎉 La tua lezione è confermata!</h2>
+    <h2>La tua lezione e confermata!</h2>
     <p>Ciao <strong>${guestName}</strong>,</p>
     <p>Il docente ha confermato la tua richiesta di lezione per il seguente appuntamento:</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">📅 Data:</span> ${formattedDate}</div>
-      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
-      <div class="card-item"><span class="card-label">📌 Stato:</span> <strong style="color:#238626;">Confermata</strong></div>
+      <div class="card-item"><span class="card-label">Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      <div class="card-item"><span class="card-label">Stato:</span> <strong style="color:#238626;">Confermata</strong></div>
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
@@ -298,7 +298,7 @@ export function lessonRejectedStudentEmail({
   reason?: string | null;
 }): string {
   const reasonHtml = reason
-    ? `<div class="card-item" style="margin-top:12px;"><span class="card-label">💬 Messaggio del docente:</span><br>
+    ? `<div class="card-item" style="margin-top:12px;"><span class="card-label">Messaggio del docente:</span><br>
         <blockquote style="margin:8px 0;padding:10px 14px;background:#ffffff;border-left:3px solid #687c50;font-style:italic;">
           "${reason}"
         </blockquote>
@@ -311,8 +311,8 @@ export function lessonRejectedStudentEmail({
     <p>Purtroppo il docente non ha potuto confermare la tua richiesta per la seguente lezione:</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">📅 Data richiesta:</span> ${formattedDate}</div>
-      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      <div class="card-item"><span class="card-label">Data richiesta:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
       ${reasonHtml}
     </div>
 
@@ -354,8 +354,8 @@ export function lessonTimeUpdatedStudentEmail({
     <p>L'orario della tua lezione è stato aggiornato dal docente con i seguenti nuovi riferimenti:</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">📅 Nuova Data:</span> ${formattedDate}</div>
-      <div class="card-item"><span class="card-label">⏰ Nuovo Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      <div class="card-item"><span class="card-label">Nuova Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">Nuovo Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
@@ -391,8 +391,8 @@ export function lessonCancelledStudentEmail({
     <p>Ti informiamo che la seguente lezione precedentemente programmata è stata annullata:</p>
     
     <div class="card">
-      <div class="card-item"><span class="card-label">📅 Data:</span> ${formattedDate}</div>
-      <div class="card-item"><span class="card-label">⏰ Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
+      <div class="card-item"><span class="card-label">Data:</span> ${formattedDate}</div>
+      <div class="card-item"><span class="card-label">Orario:</span> ${formattedStartTime} - ${formattedEndTime}</div>
     </div>
 
     <p>Ci scusiamo per il disagio. Puoi prenotare un nuovo appuntamento in qualunque momento:</p>

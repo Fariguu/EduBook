@@ -56,7 +56,7 @@ export function revalidateLessonPaths(lessonId?: string) {
 
 export async function fetchLessonById(admin: SupabaseClient, lessonId: string) {
   const { data: lesson, error } = await admin
-    .from("lessons")
+    .from("lessons_demo")
     .select("*")
     .eq("id", lessonId)
     .maybeSingle();
@@ -69,11 +69,10 @@ export async function fetchLessonById(admin: SupabaseClient, lessonId: string) {
 
 export async function resetSlotToAvailable(admin: SupabaseClient, lessonId: string) {
   return await admin
-    .from("lessons")
+    .from("lessons_demo")
     .update({
       status: "available",
       is_available: true,
-      student_id: null,
       guest_name: null,
       guest_email: null,
       notes: null,

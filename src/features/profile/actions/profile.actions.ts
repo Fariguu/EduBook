@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { requireAuth } from "@/features/auth/utils/require-auth";
 import { createAdminClient } from "@/utils/supabase/server";
+import { getDemoSessionId } from "@/lib/demo-session";
 import {
   profileSchema,
   type ProfileInput,
@@ -11,7 +12,6 @@ import {
   heroCardSchema,
   type HeroCardInput,
 } from "../schemas/profile.schema";
-import { updatePasswordSchema } from "@/features/auth/schemas/auth.schema";
 import { revalidatePath } from "next/cache";
 
 export interface ProfileActionResult {
@@ -29,15 +29,16 @@ export interface CredentialsInput {
  * Recupera i dati del profilo del professore autenticato.
  */
 export async function getProfile() {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
   const admin = createAdminClient();
 
   try {
     const { data, error } = await admin
-      .from("profiles")
+      .from("profiles_demo")
       .select("id, first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects, avatar_url, why_choose_us, hero_card")
-      .eq("id", user.id)
-      .single();
+      .eq("session_id", sessionId)
+      .maybeSingle();
 
     if (error || !data) {
       console.error("[getProfile] Errore recupero:", error);
@@ -46,7 +47,7 @@ export async function getProfile() {
 
     return {
       ...data,
-      authEmail: user.email || data.email || "",
+      authEmail: data.email || "mario.rossi@edubook.it",
     };
   } catch (err) {
     console.error("[getProfile] Errore inatteso:", err);
@@ -58,7 +59,8 @@ export async function getProfile() {
  * Aggiorna i dati anagrafici, la biografia, i recapiti e le materie insegnate.
  */
 export async function updateProfile(input: ProfileInput): Promise<ProfileActionResult> {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const validation = profileSchema.safeParse(input);
   if (!validation.success) {
@@ -73,7 +75,7 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
 
   try {
     const { error } = await admin
-      .from("profiles")
+      .from("profiles_demo")
       .update({
         first_name,
         last_name,
@@ -86,7 +88,7 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
         suggested_subjects: suggested_subjects || [],
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("session_id", sessionId);
 
     if (error) {
       console.error("[updateProfile] Errore update:", error);
@@ -94,14 +96,6 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
         success: false,
         error: "Impossibile aggiornare il profilo. Riprova più tardi.",
       };
-    }
-
-    // Sincronizza l'email in auth.users se modificata
-    if (user.email && user.email.toLowerCase() !== email.toLowerCase()) {
-      await admin.auth.admin.updateUserById(user.id, {
-        email,
-        email_confirm: true,
-      });
     }
 
     // Revalidate tutte le pagine che mostrano dati del professore
@@ -122,14 +116,15 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
 }
 
 /**
- * Aggiorna le credenziali di accesso del professore (email e/o password).
+ * Aggiorna le credenziali di accesso del professore (email e/o password) nella sandbox demo.
  */
 export async function updateCredentials(input: CredentialsInput): Promise<ProfileActionResult> {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
   const admin = createAdminClient();
 
   try {
-    // 1. Aggiornamento Email se fornita e modificata
+    // Aggiornamento Email fittizia se fornita
     if (input.email?.trim()) {
       const normalizedEmail = input.email.trim().toLowerCase();
       const emailValidation = z
@@ -144,54 +139,13 @@ export async function updateCredentials(input: CredentialsInput): Promise<Profil
         };
       }
 
-      const { error: authError } = await admin.auth.admin.updateUserById(user.id, {
-        email: normalizedEmail,
-        email_confirm: true,
-      });
-
-      if (authError) {
-        console.error("[updateCredentials] Errore update email auth:", authError);
-        return {
-          success: false,
-          error: "Impossibile aggiornare l'email di accesso: " + authError.message,
-        };
-      }
-
-      // Sincronizza anche la tabella dei profili
       await admin
-        .from("profiles")
+        .from("profiles_demo")
         .update({
           email: normalizedEmail,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", user.id);
-    }
-
-    // 2. Aggiornamento Password se fornita
-    if (input.newPassword) {
-      const passwordValidation = updatePasswordSchema.safeParse({
-        newPassword: input.newPassword,
-        confirmPassword: input.confirmPassword || "",
-      });
-
-      if (!passwordValidation.success) {
-        return {
-          success: false,
-          error: passwordValidation.error.issues[0]?.message || "Password non valida",
-        };
-      }
-
-      const { error: pwdError } = await admin.auth.admin.updateUserById(user.id, {
-        password: input.newPassword,
-      });
-
-      if (pwdError) {
-        console.error("[updateCredentials] Errore update password auth:", pwdError);
-        return {
-          success: false,
-          error: "Impossibile aggiornare la password: " + pwdError.message,
-        };
-      }
+        .eq("session_id", sessionId);
     }
 
     revalidatePath("/dashboard/profilo");
@@ -211,7 +165,8 @@ export async function updateCredentials(input: CredentialsInput): Promise<Profil
  * Aggiorna la configurazione personalizzata della sezione "Perché Scegliere Questo Percorso".
  */
 export async function updateWhyChooseUs(input: WhyChooseUsInput): Promise<ProfileActionResult> {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const validation = whyChooseUsSchema.safeParse(input);
   if (!validation.success) {
@@ -225,12 +180,12 @@ export async function updateWhyChooseUs(input: WhyChooseUsInput): Promise<Profil
 
   try {
     const { error } = await admin
-      .from("profiles")
+      .from("profiles_demo")
       .update({
         why_choose_us: validation.data,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("session_id", sessionId);
 
     if (error) {
       console.error("[updateWhyChooseUs] Errore salvataggio:", error);
@@ -256,17 +211,18 @@ export async function updateWhyChooseUs(input: WhyChooseUsInput): Promise<Profil
  * Ripristina la sezione "Perché Scegliere Questo Percorso" ai valori predefiniti.
  */
 export async function resetWhyChooseUs(): Promise<ProfileActionResult> {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
   const admin = createAdminClient();
 
   try {
     const { error } = await admin
-      .from("profiles")
+      .from("profiles_demo")
       .update({
         why_choose_us: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("session_id", sessionId);
 
     if (error) {
       console.error("[resetWhyChooseUs] Errore ripristino:", error);
@@ -292,7 +248,8 @@ export async function resetWhyChooseUs(): Promise<ProfileActionResult> {
  * Aggiorna la configurazione personalizzata della scheda informativa Hero.
  */
 export async function updateHeroCard(input: HeroCardInput): Promise<ProfileActionResult> {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
 
   const validation = heroCardSchema.safeParse(input);
   if (!validation.success) {
@@ -306,12 +263,12 @@ export async function updateHeroCard(input: HeroCardInput): Promise<ProfileActio
 
   try {
     const { error } = await admin
-      .from("profiles")
+      .from("profiles_demo")
       .update({
         hero_card: validation.data,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("session_id", sessionId);
 
     if (error) {
       console.error("[updateHeroCard] Errore salvataggio:", error);
@@ -337,17 +294,18 @@ export async function updateHeroCard(input: HeroCardInput): Promise<ProfileActio
  * Ripristina la scheda informativa Hero ai valori predefiniti.
  */
 export async function resetHeroCard(): Promise<ProfileActionResult> {
-  const { user } = await requireAuth();
+  await requireAuth();
+  const sessionId = await getDemoSessionId();
   const admin = createAdminClient();
 
   try {
     const { error } = await admin
-      .from("profiles")
+      .from("profiles_demo")
       .update({
         hero_card: null,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq("session_id", sessionId);
 
     if (error) {
       console.error("[resetHeroCard] Errore ripristino:", error);

@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/server";
+import { getDemoSessionId } from "@/lib/demo-session";
 import { bookingSchema, type BookingSchemaInput } from "../schemas/booking.schema";
 import type { AvailableSlot, BookingResult } from "../types/booking.types";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -15,12 +16,14 @@ import { it } from "date-fns/locale";
  */
 export async function getAvailableSlots(): Promise<AvailableSlot[]> {
   try {
-    const supabase = await createClient();
+    const sessionId = await getDemoSessionId();
+    const admin = createAdminClient();
     const nowIso = new Date().toISOString();
 
-    const { data, error } = await supabase
-      .from("lessons")
+    const { data, error } = await admin
+      .from("lessons_demo")
       .select("id, start_time, end_time, is_available, status")
+      .eq("session_id", sessionId)
       .eq("is_available", true)
       .eq("status", "available")
       .gte("start_time", nowIso)
@@ -62,10 +65,12 @@ export async function bookLesson(input: BookingSchemaInput): Promise<BookingResu
       };
     }
 
-    // 3. Esecuzione RPC split_and_book_slot
-    const supabase = await createClient();
+    // 3. Esecuzione RPC split_and_book_slot_demo
+    const sessionId = await getDemoSessionId();
+    const admin = createAdminClient();
 
-    const { data: rpcData, error: rpcError } = await supabase.rpc("split_and_book_slot", {
+    const { data: rpcData, error: rpcError } = await admin.rpc("split_and_book_slot_demo", {
+      p_session_id: sessionId,
       p_slot_id: slotId,
       p_req_start: startTime,
       p_req_end: endTime,
