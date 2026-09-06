@@ -1,4 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
+import {
+  DEFAULT_WHY_CHOOSE_US,
+  type WhyChooseUsData,
+} from "@/features/profile/constants/why-choose-us.constants";
 
 export interface PublicProfessorProfile {
   isAuthenticated: boolean;
@@ -9,6 +13,7 @@ export interface PublicProfessorProfile {
   bio: string;
   subjects: string[];
   subjectDetails: Record<string, string>;
+  whyChooseUs: WhyChooseUsData;
 }
 
 interface RawProfileData {
@@ -20,6 +25,7 @@ interface RawProfileData {
   bio?: string | null;
   teaching_subjects?: string[] | null;
   subject_details?: Record<string, string> | null;
+  why_choose_us?: unknown;
 }
 
 const DEFAULT_PROFILE: Omit<PublicProfessorProfile, "isAuthenticated"> = {
@@ -30,7 +36,25 @@ const DEFAULT_PROFILE: Omit<PublicProfessorProfile, "isAuthenticated"> = {
   bio: "Docente qualificato con pluriennale esperienza nell'insegnamento di Matematica, Fisica e Analisi. Metodo personalizzato per scuola superiore e università.",
   subjects: ["Matematica", "Fisica", "Analisi 1"],
   subjectDetails: {},
+  whyChooseUs: DEFAULT_WHY_CHOOSE_US,
 };
+
+function parseWhyChooseUs(raw: unknown): WhyChooseUsData {
+  if (!raw || typeof raw !== "object") return DEFAULT_WHY_CHOOSE_US;
+  const obj = raw as Partial<WhyChooseUsData>;
+  if (!obj.title || !Array.isArray(obj.pillars) || obj.pillars.length === 0) {
+    return DEFAULT_WHY_CHOOSE_US;
+  }
+  return {
+    title: obj.title || DEFAULT_WHY_CHOOSE_US.title,
+    subtitle: typeof obj.subtitle === "string" ? obj.subtitle : DEFAULT_WHY_CHOOSE_US.subtitle,
+    pillars: obj.pillars.map((p) => ({
+      icon: p.icon || "Target",
+      title: p.title || "",
+      description: p.description || "",
+    })),
+  };
+}
 
 function parseProfile(profile: RawProfileData | null): Omit<PublicProfessorProfile, "isAuthenticated"> {
   if (!profile) return DEFAULT_PROFILE;
@@ -49,6 +73,7 @@ function parseProfile(profile: RawProfileData | null): Omit<PublicProfessorProfi
       profile.subject_details && typeof profile.subject_details === "object"
         ? profile.subject_details
         : DEFAULT_PROFILE.subjectDetails,
+    whyChooseUs: parseWhyChooseUs(profile.why_choose_us),
   };
 }
 
@@ -62,7 +87,7 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details")
+      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, why_choose_us")
       .limit(1)
       .maybeSingle();
 
@@ -78,3 +103,4 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
     };
   }
 }
+

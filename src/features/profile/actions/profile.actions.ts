@@ -3,7 +3,12 @@
 import { z } from "zod";
 import { requireAuth } from "@/features/auth/utils/require-auth";
 import { createAdminClient } from "@/utils/supabase/server";
-import { profileSchema, type ProfileInput } from "../schemas/profile.schema";
+import {
+  profileSchema,
+  type ProfileInput,
+  whyChooseUsSchema,
+  type WhyChooseUsInput,
+} from "../schemas/profile.schema";
 import { updatePasswordSchema } from "@/features/auth/schemas/auth.schema";
 import { revalidatePath } from "next/cache";
 
@@ -28,7 +33,7 @@ export async function getProfile() {
   try {
     const { data, error } = await admin
       .from("profiles")
-      .select("id, first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects, avatar_url")
+      .select("id, first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects, avatar_url, why_choose_us")
       .eq("id", user.id)
       .single();
 
@@ -199,3 +204,85 @@ export async function updateCredentials(input: CredentialsInput): Promise<Profil
     };
   }
 }
+
+/**
+ * Aggiorna la configurazione personalizzata della sezione "Perché Scegliere Questo Percorso".
+ */
+export async function updateWhyChooseUs(input: WhyChooseUsInput): Promise<ProfileActionResult> {
+  const { user } = await requireAuth();
+
+  const validation = whyChooseUsSchema.safeParse(input);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.issues[0]?.message || "Dati sezione non validi",
+    };
+  }
+
+  const admin = createAdminClient();
+
+  try {
+    const { error } = await admin
+      .from("profiles")
+      .update({
+        why_choose_us: validation.data,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("[updateWhyChooseUs] Errore salvataggio:", error);
+      return {
+        success: false,
+        error: "Impossibile salvare la sezione. Riprova più tardi.",
+      };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/dashboard/profilo");
+    return { success: true };
+  } catch (err) {
+    console.error("[updateWhyChooseUs] Errore inatteso:", err);
+    return {
+      success: false,
+      error: "Si è verificato un errore durante il salvataggio della sezione.",
+    };
+  }
+}
+
+/**
+ * Ripristina la sezione "Perché Scegliere Questo Percorso" ai valori predefiniti.
+ */
+export async function resetWhyChooseUs(): Promise<ProfileActionResult> {
+  const { user } = await requireAuth();
+  const admin = createAdminClient();
+
+  try {
+    const { error } = await admin
+      .from("profiles")
+      .update({
+        why_choose_us: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("[resetWhyChooseUs] Errore ripristino:", error);
+      return {
+        success: false,
+        error: "Impossibile ripristinare i valori predefiniti.",
+      };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/dashboard/profilo");
+    return { success: true };
+  } catch (err) {
+    console.error("[resetWhyChooseUs] Errore inatteso:", err);
+    return {
+      success: false,
+      error: "Si è verificato un errore durante il ripristino.",
+    };
+  }
+}
+
