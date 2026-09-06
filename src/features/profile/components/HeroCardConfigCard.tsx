@@ -19,7 +19,6 @@ import {
   RotateCcwIcon,
   SaveIcon,
   Loader2Icon,
-  BookOpen,
 } from "lucide-react";
 import {
   DEFAULT_HERO_CARD,
@@ -30,21 +29,9 @@ import { updateHeroCard, resetHeroCard } from "../actions/profile.actions";
 
 interface HeroCardConfigCardProps {
   readonly initialData?: HeroCardData | null;
-  readonly professorName?: string;
-  readonly headline?: string | null;
 }
 
-const PREVIEW_VALUE_COLORS = [
-  "text-primary font-semibold",
-  "text-secondary font-semibold",
-  "text-foreground font-semibold",
-];
-
-export function HeroCardConfigCard({
-  initialData,
-  professorName = "Professore",
-  headline = "Docente Qualificato",
-}: HeroCardConfigCardProps) {
+export function HeroCardConfigCard({ initialData }: HeroCardConfigCardProps) {
   const data =
     initialData && initialData.items?.length > 0 ? initialData : DEFAULT_HERO_CARD;
 
@@ -171,146 +158,98 @@ export function HeroCardConfigCard({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Form Fields Column */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold text-foreground">
-                    Righe Informative ({items.length}/5)
-                  </Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddItem}
-                    disabled={items.length >= 5 || isSubmitting}
-                    className="text-xs h-7 border-border hover:border-primary/50 text-foreground"
-                  >
-                    <PlusIcon className="w-3 h-3 mr-1 text-primary" />
-                    Aggiungi Voce
-                  </Button>
-                </div>
-
-                <div className="space-y-2.5">
-                  {items.map((item, index) => (
-                    <div
-                      key={`item-row-${index}`}
-                      className="flex items-center gap-2 p-2.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="grid grid-cols-2 gap-2 flex-1">
-                        <div>
-                          <Label className="text-[10px] text-muted-foreground mb-1 block">
-                            Etichetta (Sinistra)
-                          </Label>
-                          <Input
-                            placeholder="Es. Lezioni disponibili"
-                            value={item.label}
-                            onChange={(e) =>
-                              handleItemChange(index, "label", e.target.value)
-                            }
-                            maxLength={35}
-                            disabled={isSubmitting}
-                            className="text-xs h-8 bg-background border-border"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-muted-foreground mb-1 block">
-                            Valore (Destra)
-                          </Label>
-                          <Input
-                            placeholder="Es. Online & In Presenza"
-                            value={item.value}
-                            onChange={(e) =>
-                              handleItemChange(index, "value", e.target.value)
-                            }
-                            maxLength={40}
-                            disabled={isSubmitting}
-                            className="text-xs h-8 bg-background border-border"
-                          />
-                        </div>
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveItem(index)}
-                        disabled={items.length <= 1 || isSubmitting}
-                        title="Elimina voce"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0 mt-3"
-                      >
-                        <Trash2Icon className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+          <div className="space-y-5">
+            {/* Righe Informative */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-foreground">
+                  Righe Informative ({items.length}/5)
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddItem}
+                  disabled={items.length >= 5 || isSubmitting}
+                  className="text-xs h-7 border-border hover:border-primary/50 text-foreground"
+                >
+                  <PlusIcon className="w-3 h-3 mr-1 text-primary" />
+                  Aggiungi Voce
+                </Button>
               </div>
 
-              {/* Footnote Field */}
-              <div className="space-y-1.5 pt-2">
-                <Label htmlFor="hero-footnote" className="text-xs font-semibold text-foreground">
-                  Nota a piè di pagina (opzionale)
-                </Label>
-                <Input
-                  id="hero-footnote"
-                  placeholder="Es. Nessun account studente richiesto — prenotazione diretta in 2 minuti."
-                  value={footnote}
-                  onChange={(e) => setFootnote(e.target.value)}
-                  maxLength={120}
-                  disabled={isSubmitting}
-                  className="text-xs bg-background border-border"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Testo informativo visualizzato in basso nella card. Lascia vuoto per nasconderlo.
-                </p>
+              <div className="space-y-2.5">
+                {items.map((item, index) => (
+                  <div
+                    key={`item-row-${index}`}
+                    className="flex items-center gap-2 p-2.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground mb-1 block">
+                          Etichetta (Sinistra)
+                        </Label>
+                        <Input
+                          placeholder="Es. Lezioni disponibili"
+                          value={item.label}
+                          onChange={(e) =>
+                            handleItemChange(index, "label", e.target.value)
+                          }
+                          maxLength={35}
+                          disabled={isSubmitting}
+                          className="text-xs h-8 bg-background border-border"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground mb-1 block">
+                          Valore (Destra)
+                        </Label>
+                        <Input
+                          placeholder="Es. Online & In Presenza"
+                          value={item.value}
+                          onChange={(e) =>
+                            handleItemChange(index, "value", e.target.value)
+                          }
+                          maxLength={40}
+                          disabled={isSubmitting}
+                          className="text-xs h-8 bg-background border-border"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveItem(index)}
+                      disabled={items.length <= 1 || isSubmitting}
+                      title="Elimina voce"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0 mt-3"
+                    >
+                      <Trash2Icon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Live Preview Column */}
-            <div className="lg:col-span-5 space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground">
-                Anteprima Live Landing Page
+            {/* Footnote Field */}
+            <div className="space-y-1.5 pt-2 border-t border-border/60">
+              <Label htmlFor="hero-footnote" className="text-xs font-semibold text-foreground">
+                Nota a piè di pagina (opzionale)
               </Label>
-              <div className="rounded-2xl border border-border bg-background p-5 shadow-lg space-y-4">
-                <div className="flex items-center gap-3 border-b border-border pb-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-inner">
-                    <BookOpen className="h-5 w-5" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <h3 className="font-bold text-sm text-foreground truncate">
-                      {professorName}
-                    </h3>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {headline || "Docente"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2.5 text-xs text-muted-foreground">
-                  {items.map((item, index) => (
-                    <div
-                      key={`preview-${index}`}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 gap-2"
-                    >
-                      <span className="font-medium text-foreground truncate">
-                        {item.label || "Etichetta"}
-                      </span>
-                      <span
-                        className={`${PREVIEW_VALUE_COLORS[index % PREVIEW_VALUE_COLORS.length]} shrink-0`}
-                      >
-                        {item.value || "Valore"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {footnote ? (
-                  <div className="pt-1 text-center text-[11px] text-muted-foreground leading-tight">
-                    {footnote}
-                  </div>
-                ) : null}
-              </div>
+              <Input
+                id="hero-footnote"
+                placeholder="Es. Nessun account studente richiesto — prenotazione diretta in 2 minuti."
+                value={footnote}
+                onChange={(e) => setFootnote(e.target.value)}
+                maxLength={120}
+                disabled={isSubmitting}
+                className="text-xs bg-background border-border"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Testo informativo visualizzato in basso nella card. Lascia vuoto per nasconderlo.
+              </p>
             </div>
           </div>
 

@@ -17,11 +17,6 @@ export const dynamic = "force-dynamic";
 export default async function ProfiloPage() {
   const profile = await getProfile();
 
-  const professorName =
-    profile?.first_name || profile?.last_name
-      ? `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
-      : "Professore";
-
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Intestazione e ritorno */}
@@ -46,11 +41,7 @@ export default async function ProfiloPage() {
       <ProfileForm initialProfile={profile} />
 
       {/* Personalizzazione Card Informativa Hero */}
-      <HeroCardConfigCard
-        initialData={profile?.hero_card}
-        professorName={professorName}
-        headline={profile?.headline}
-      />
+      <HeroCardConfigCard initialData={profile?.hero_card} />
 
       {/* Personalizzazione Sezione "Gestione Percorso" */}
       <WhyChooseUsCard initialData={profile?.why_choose_us} />
