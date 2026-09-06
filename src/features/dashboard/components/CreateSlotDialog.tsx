@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -14,9 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PlusIcon, CalendarIcon, Loader2Icon } from "lucide-react";
+import { PlusIcon, CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { createSlot } from "../actions/dashboard.actions";
+import { DialogActionFooter } from "./DialogActionFooter";
 
 export function CreateSlotDialog() {
   const [open, setOpen] = React.useState(false);
@@ -188,30 +188,11 @@ export function CreateSlotDialog() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isSubmitting}
-            >
-              Annulla
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2Icon className="w-4 h-4 animate-spin" />
-                  Salvataggio...
-                </span>
-              ) : (
-                "Crea Disponibilità"
-              )}
-            </Button>
-          </DialogFooter>
+          <DialogActionFooter
+            onCancel={() => setOpen(false)}
+            isSubmitting={isSubmitting}
+            submitLabel="Crea Disponibilità"
+          />
         </form>
       </DialogContent>
     </Dialog>

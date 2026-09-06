@@ -41,8 +41,9 @@ export function ContactForm() {
       return;
     }
 
-    if (!email.trim() || !email.includes("@")) {
-      toast.error("Inserisci un indirizzo email valido.");
+    const emailRegex = /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/;
+    if (!email.trim() || !emailRegex.test(email.trim())) {
+      toast.error("Inserisci un indirizzo email valido con un dominio valido.");
       return;
     }
 
@@ -134,6 +135,7 @@ export function ContactForm() {
           ) : (
             <motion.form
               key="form"
+              noValidate
               onSubmit={handleSubmit}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

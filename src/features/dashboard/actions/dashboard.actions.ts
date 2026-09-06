@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/features/auth/utils/require-auth";
 import { createAdminClient } from "@/utils/supabase/server";
 import {
@@ -20,11 +21,15 @@ import {
   lessonTimeUpdatedStudentEmail,
   lessonCancelledStudentEmail,
 } from "@/lib/email-templates";
-import { revalidatePath } from "next/cache";
-import { addWeeks, differenceInWeeks, format } from "date-fns";
-import { it } from "date-fns/locale";
-
-const formatGCalDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, "");
+import { addWeeks, differenceInWeeks } from "date-fns";
+import {
+  fetchLessonById,
+  formatLessonDates,
+  getProfessorDisplayName,
+  getLessonUrls,
+  revalidateLessonPaths,
+  resetSlotToAvailable,
+} from "../utils/lesson-action-helpers";
 
 /**
  * Recupera tutti i dati necessari per la dashboard del professore.
@@ -88,6 +93,98 @@ export async function getDashboardData(): Promise<DashboardData> {
   };
 }
 
+async function createSingleSlot(
+  admin: ReturnType<typeof createAdminClient>,
+  startInitial: Date,
+  endInitial: Date
+): Promise<DashboardActionResult> {
+  const { data: overlapping } = await admin
+    .from("lessons")
+    .select("id")
+    .in("status", ["available", "pending", "confirmed"])
+    .lt("start_time", endInitial.toISOString())
+    .gt("end_time", startInitial.toISOString())
+    .limit(1);
+
+  if (overlapping && overlapping.length > 0) {
+    return {
+      success: false,
+      error: "Esiste già uno slot o una lezione programmata in questo intervallo di orario.",
+    };
+  }
+
+  const { error } = await admin.from("lessons").insert({
+    start_time: startInitial.toISOString(),
+    end_time: endInitial.toISOString(),
+    status: "available",
+    is_available: true,
+  });
+
+  if (error) {
+    console.error("[createSlot] Errore inserimento singolo:", error);
+    return { success: false, error: "Impossibile creare lo slot." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/prenota");
+  return { success: true, count: 1 };
+}
+
+async function createRecurringSlots(
+  admin: ReturnType<typeof createAdminClient>,
+  startInitial: Date,
+  endInitial: Date,
+  recurrenceEndDate: string
+): Promise<DashboardActionResult> {
+  const recEnd = new Date(recurrenceEndDate);
+  recEnd.setHours(23, 59, 59, 999);
+
+  const weeksDiff = Math.min(differenceInWeeks(recEnd, startInitial) + 1, 52);
+  const slotsToInsert = [];
+
+  for (let i = 0; i <= weeksDiff; i++) {
+    const curStart = addWeeks(startInitial, i);
+    const curEnd = addWeeks(endInitial, i);
+
+    if (curStart.getTime() > recEnd.getTime()) break;
+
+    const { data: overlapping } = await admin
+      .from("lessons")
+      .select("id")
+      .in("status", ["available", "pending", "confirmed"])
+      .lt("start_time", curEnd.toISOString())
+      .gt("end_time", curStart.toISOString())
+      .limit(1);
+
+    if (!overlapping || overlapping.length === 0) {
+      slotsToInsert.push({
+        start_time: curStart.toISOString(),
+        end_time: curEnd.toISOString(),
+        status: "available",
+        is_available: true,
+      });
+    }
+  }
+
+  if (slotsToInsert.length === 0) {
+    return {
+      success: false,
+      error: "Nessuno slot generato: gli orari indicati sono già occupati o non validi.",
+    };
+  }
+
+  const { error } = await admin.from("lessons").insert(slotsToInsert);
+
+  if (error) {
+    console.error("[createSlot] Errore inserimento batch ricorrente:", error);
+    return { success: false, error: "Impossibile creare la serie di slot ricorrenti." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/prenota");
+  return { success: true, count: slotsToInsert.length };
+}
+
 /**
  * Crea uno o più slot di disponibilità (singolo o ricorrente settimanale).
  */
@@ -103,61 +200,36 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
   const admin = createAdminClient();
 
   try {
-    if (!isRecurring || !recurrenceEndDate) {
-      // Slot singolo
-      const { error } = await admin.from("lessons").insert({
-        start_time: startTime,
-        end_time: endTime,
-        status: "available",
-        is_available: true,
-      });
-
-      if (error) {
-        console.error("[createSlot] Errore inserimento singolo:", error);
-        return { success: false, error: "Impossibile creare lo slot." };
-      }
-
-      revalidatePath("/dashboard");
-      revalidatePath("/prenota");
-      return { success: true, count: 1 };
-    }
-
-    // Slot ricorrente: ripete ogni 7 giorni fino alla data limite
     const startInitial = new Date(startTime);
     const endInitial = new Date(endTime);
-    const recEnd = new Date(recurrenceEndDate);
+    startInitial.setSeconds(0, 0);
+    endInitial.setSeconds(0, 0);
 
-    const weeksDiff = Math.min(differenceInWeeks(recEnd, startInitial) + 1, 52); // Limite di sicurezza: max 52 settimane
-
-    const slotsToInsert = [];
-    for (let i = 0; i <= weeksDiff; i++) {
-      const curStart = addWeeks(startInitial, i);
-      const curEnd = addWeeks(endInitial, i);
-
-      if (curStart.getTime() > recEnd.getTime()) break;
-
-      slotsToInsert.push({
-        start_time: curStart.toISOString(),
-        end_time: curEnd.toISOString(),
-        status: "available",
-        is_available: true,
-      });
+    if (Number.isNaN(startInitial.getTime()) || Number.isNaN(endInitial.getTime())) {
+      return { success: false, error: "Date orario non valide." };
     }
 
-    if (slotsToInsert.length === 0) {
-      return { success: false, error: "Nessuno slot generato con i parametri indicati." };
+    if (endInitial.getTime() <= startInitial.getTime()) {
+      return { success: false, error: "L'orario di fine deve essere successivo all'orario di inizio." };
     }
 
-    const { error } = await admin.from("lessons").insert(slotsToInsert);
-
-    if (error) {
-      console.error("[createSlot] Errore inserimento batch ricorrente:", error);
-      return { success: false, error: "Impossibile creare la serie di slot ricorrenti." };
+    if (startInitial.getTime() <= Date.now()) {
+      return { success: false, error: "La data e l'orario di inizio dello slot devono essere nel futuro." };
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath("/prenota");
-    return { success: true, count: slotsToInsert.length };
+    const durationMin = (endInitial.getTime() - startInitial.getTime()) / (1000 * 60);
+    if (durationMin < 30) {
+      return { success: false, error: "Lo slot deve avere una durata minima di 30 minuti." };
+    }
+    if (durationMin > 720) {
+      return { success: false, error: "Lo slot non può superare la durata massima di 12 ore." };
+    }
+
+    if (!isRecurring || !recurrenceEndDate) {
+      return await createSingleSlot(admin, startInitial, endInitial);
+    }
+
+    return await createRecurringSlots(admin, startInitial, endInitial, recurrenceEndDate);
   } catch (err) {
     console.error("[createSlot] Errore inatteso:", err);
     return { success: false, error: "Errore imprevisto durante la creazione." };
@@ -201,18 +273,11 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
   const admin = createAdminClient();
 
   try {
-    // 1. Recupera la lezione
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
-    // 2. Aggiorna stato in confirmed
     const { error: updateErr } = await admin
       .from("lessons")
       .update({
@@ -226,45 +291,36 @@ export async function confirmLesson(lessonId: string): Promise<DashboardActionRe
       return { success: false, error: "Impossibile confermare la lezione." };
     }
 
-    // 3. Notifica email allo studente se presente l'indirizzo
     if (lesson.guest_email) {
-      const startDate = new Date(lesson.start_time);
-      const endDate = new Date(lesson.end_time);
-      const profName =
-        profile?.first_name || profile?.last_name
-          ? `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
-          : "il Professore";
+      try {
+        const profName = getProfessorDisplayName(profile);
+        const { startDate, endDate, formattedDate, formattedStartTime, formattedEndTime } =
+          formatLessonDates(lesson.start_time, lesson.end_time);
+        const { manageUrl, googleCalendarUrl } = getLessonUrls(
+          lessonId,
+          profName,
+          startDate,
+          endDate
+        );
 
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      const manageUrl = `${siteUrl}/gestisci/${lessonId}`;
-
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-        `Lezione con ${profName}`
-      )}&dates=${formatGCalDate(startDate)}/${formatGCalDate(endDate)}&details=${encodeURIComponent(
-        `Lezione privata con ${profName}.\nID: ${lessonId}\nGestione: ${manageUrl}`
-      )}`;
-
-      await sendEmail({
-        to: lesson.guest_email,
-        subject: "🎉 La tua lezione è confermata! - EduBook",
-        html: lessonConfirmedStudentEmail({
-          guestName: lesson.guest_name || "Studente",
-          formattedDate,
-          formattedStartTime,
-          formattedEndTime,
-          googleCalendarUrl,
-          manageUrl,
-        }),
-      });
+        await sendEmail({
+          to: lesson.guest_email,
+          subject: "🎉 La tua lezione è confermata! - EduBook",
+          html: lessonConfirmedStudentEmail({
+            guestName: lesson.guest_name || "Studente",
+            formattedDate,
+            formattedStartTime,
+            formattedEndTime,
+            googleCalendarUrl,
+            manageUrl,
+          }),
+        });
+      } catch (emailErr) {
+        console.warn("[confirmLesson] Invio email non riuscito ma lezione confermata:", emailErr);
+      }
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[confirmLesson] Errore inatteso:", err);
@@ -287,37 +343,19 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
   const admin = createAdminClient();
 
   try {
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
-    // Salva riferimenti per l'email prima di resettare i campi
     const guestEmail = lesson.guest_email;
     const guestName = lesson.guest_name || "Studente";
-    const startDate = new Date(lesson.start_time);
-    const endDate = new Date(lesson.end_time);
+    const { formattedDate, formattedStartTime, formattedEndTime } = formatLessonDates(
+      lesson.start_time,
+      lesson.end_time
+    );
 
-    // Resetta lo slot a disponibile e cancella i dati del guest
-    const { error: resetErr } = await admin
-      .from("lessons")
-      .update({
-        status: "available",
-        is_available: true,
-        student_id: null,
-        guest_name: null,
-        guest_email: null,
-        notes: null,
-        reschedule_requested: false,
-        reschedule_notes: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", lessonId);
+    const { error: resetErr } = await resetSlotToAvailable(admin, lessonId);
 
     if (resetErr) {
       console.error("[rejectLesson] Errore reset slot:", resetErr);
@@ -325,10 +363,6 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
     }
 
     if (guestEmail) {
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
       await sendEmail({
         to: guestEmail,
         subject: "Aggiornamento richiesta lezione - EduBook",
@@ -342,9 +376,7 @@ export async function rejectLesson(input: RejectLessonInput): Promise<DashboardA
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[rejectLesson] Errore inatteso:", err);
@@ -367,21 +399,51 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
   const admin = createAdminClient();
 
   try {
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
+    const startObj = new Date(newStartTime);
+    const endObj = new Date(newEndTime);
+    startObj.setSeconds(0, 0);
+    endObj.setSeconds(0, 0);
 
+    if (Number.isNaN(startObj.getTime()) || Number.isNaN(endObj.getTime())) {
+      return { success: false, error: "Date orario non valide." };
+    }
+
+    if (endObj.getTime() <= startObj.getTime()) {
+      return { success: false, error: "L'orario di fine deve essere successivo all'orario di inizio." };
+    }
+
+    const durationMin = (endObj.getTime() - startObj.getTime()) / (1000 * 60);
+    if (durationMin < 30) {
+      return { success: false, error: "La durata minima della lezione è di 30 minuti." };
+    }
+
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
+    }
+
+    // Verifica che il nuovo orario non si sovrapponga a un'altra lezione confermata
+    const { data: colliding } = await admin
+      .from("lessons")
+      .select("id")
+      .eq("status", "confirmed")
+      .neq("id", lessonId)
+      .lt("start_time", endObj.toISOString())
+      .gt("end_time", startObj.toISOString())
+      .limit(1);
+
+    if (colliding && colliding.length > 0) {
+      return {
+        success: false,
+        error: "Il nuovo orario selezionato collide con un'altra lezione già confermata.",
+      };
     }
 
     const { error: updateErr } = await admin
       .from("lessons")
       .update({
-        start_time: newStartTime,
-        end_time: newEndTime,
+        start_time: startObj.toISOString(),
+        end_time: endObj.toISOString(),
         reschedule_requested: false,
         reschedule_notes: null,
         updated_at: new Date().toISOString(),
@@ -394,25 +456,15 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
     }
 
     if (lesson.guest_email) {
-      const startDate = new Date(newStartTime);
-      const endDate = new Date(newEndTime);
-      const profName =
-        profile?.first_name || profile?.last_name
-          ? `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
-          : "il Professore";
-
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-      const manageUrl = `${siteUrl}/gestisci/${lessonId}`;
-
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-        `Lezione con ${profName}`
-      )}&dates=${formatGCalDate(startDate)}/${formatGCalDate(endDate)}&details=${encodeURIComponent(
-        `Lezione aggiornata con ${profName}.\nID: ${lessonId}`
-      )}`;
+      const profName = getProfessorDisplayName(profile);
+      const { startDate, endDate, formattedDate, formattedStartTime, formattedEndTime } =
+        formatLessonDates(newStartTime, newEndTime);
+      const { manageUrl, googleCalendarUrl } = getLessonUrls(
+        lessonId,
+        profName,
+        startDate,
+        endDate
+      );
 
       await sendEmail({
         to: lesson.guest_email,
@@ -428,9 +480,7 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[updateLessonTime] Errore inatteso:", err);
@@ -455,36 +505,20 @@ export async function cancelLessonWithChoice(
   const admin = createAdminClient();
 
   try {
-    const { data: lesson, error: fetchErr } = await admin
-      .from("lessons")
-      .select("*")
-      .eq("id", lessonId)
-      .maybeSingle();
-
+    const { error: fetchErr, lesson } = await fetchLessonById(admin, lessonId);
     if (fetchErr || !lesson) {
-      return { success: false, error: "Lezione non trovata." };
+      return { success: false, error: fetchErr || "Lezione non trovata." };
     }
 
     const guestEmail = lesson.guest_email;
     const guestName = lesson.guest_name || "Studente";
-    const startDate = new Date(lesson.start_time);
-    const endDate = new Date(lesson.end_time);
+    const { formattedDate, formattedStartTime, formattedEndTime } = formatLessonDates(
+      lesson.start_time,
+      lesson.end_time
+    );
 
     if (keepAvailable) {
-      const { error: resetErr } = await admin
-        .from("lessons")
-        .update({
-          status: "available",
-          is_available: true,
-          student_id: null,
-          guest_name: null,
-          guest_email: null,
-          notes: null,
-          reschedule_requested: false,
-          reschedule_notes: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", lessonId);
+      const { error: resetErr } = await resetSlotToAvailable(admin, lessonId);
 
       if (resetErr) {
         console.error("[cancelLessonWithChoice] Errore reset:", resetErr);
@@ -503,10 +537,6 @@ export async function cancelLessonWithChoice(
     }
 
     if (guestEmail) {
-      const formattedDate = format(startDate, "EEEE d MMMM yyyy", { locale: it });
-      const formattedStartTime = format(startDate, "HH:mm");
-      const formattedEndTime = format(endDate, "HH:mm");
-
       await sendEmail({
         to: guestEmail,
         subject: "Lezione Annullata - EduBook",
@@ -519,9 +549,7 @@ export async function cancelLessonWithChoice(
       });
     }
 
-    revalidatePath("/dashboard");
-    revalidatePath(`/gestisci/${lessonId}`);
-    revalidatePath("/prenota");
+    revalidateLessonPaths(lessonId);
     return { success: true };
   } catch (err) {
     console.error("[cancelLessonWithChoice] Errore inatteso:", err);

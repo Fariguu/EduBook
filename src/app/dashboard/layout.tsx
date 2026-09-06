@@ -21,7 +21,7 @@ export default async function DashboardLayout({
     <div className="flex flex-col min-h-screen bg-background text-text">
       {/* HEADER DI NAVIGAZIONE DASHBOARD */}
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+        <div className="w-full flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo & Badge */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center gap-2 font-black text-xl tracking-tight text-primary">
@@ -75,7 +75,7 @@ export default async function DashboardLayout({
       </header>
 
       {/* CONTENUTO PRINCIPALE */}
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
     </div>

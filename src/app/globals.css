@@ -1,38 +1,35 @@
 @import "tailwindcss";
 
-:root,
-[data-theme="light"] {
-  --background: #fbfff0;
-  --foreground: #02270a;
-  --primary: #238626;
-  --primary-foreground: #fbfff0;
-  --secondary: #687c50;
-  --secondary-foreground: #fbfff0;
-  --accent: #492908;
-  --accent-foreground: #fbfff0;
-  --muted: #e4ebd2;
-  --muted-foreground: #687c50;
-  --border: #d4e0bb;
-}
-
-[data-theme="dark"],
-.dark {
-  --background: #0b0f00;
-  --foreground: #d8fde0;
-  --primary: #79dc7d;
-  --primary-foreground: #0b0f00;
-  --secondary: #9baf83;
-  --secondary-foreground: #0b0f00;
-  --accent: #f7d6b6;
-  --accent-foreground: #0b0f00;
-  --muted: #172205;
-  --muted-foreground: #9baf83;
-  --border: #22330a;
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #16a34a;
+  --primary-foreground: #ffffff;
+  --secondary: #0f766e;
+  --secondary-foreground: #ffffff;
+  --accent: #ecfdf5;
+  --accent-foreground: #065f46;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #16a34a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-text: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -42,6 +39,10 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 

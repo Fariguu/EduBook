@@ -31,7 +31,13 @@ export function getSlotsForDay(slots: AvailableSlot[], selectedDate: Date): Avai
 export function generateSlotIntervals(slot: AvailableSlot): TimeSlotOption[] {
   const start = new Date(slot.start_time);
   const end = new Date(slot.end_time);
+  start.setSeconds(0, 0);
+  end.setSeconds(0, 0);
+
   const totalMinutes = differenceInMinutes(end, start);
+  if (Number.isNaN(totalMinutes) || totalMinutes <= 0) {
+    return [];
+  }
 
   // Se lo slot dura 60 minuti o meno, l'unica opzione è lo slot stesso
   if (totalMinutes <= 60) {

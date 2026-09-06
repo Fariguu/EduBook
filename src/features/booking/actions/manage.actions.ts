@@ -134,6 +134,7 @@ export async function requestReschedule(input: RescheduleSchemaInput): Promise<R
 
     // 6. Revalidate cache pagina
     revalidatePath(`/gestisci/${lessonId}`);
+    revalidatePath("/dashboard");
 
     return { success: true };
   } catch (error) {

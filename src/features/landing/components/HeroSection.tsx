@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 
 interface HeroSectionProps {
   professorName?: string;
+  headline?: string;
   bio?: string;
   subjects?: string[];
 }
 
 export function HeroSection({
   professorName = "Prof. Gabriele Farigu",
+  headline = "Docente di Scienze Matematiche",
   bio = "Docente qualificato con pluriennale esperienza nell'insegnamento di Matematica, Fisica e Analisi. Metodo personalizzato per scuola superiore e università.",
   subjects = ["Matematica", "Fisica", "Analisi 1"],
 }: HeroSectionProps) {
@@ -87,7 +89,7 @@ export function HeroSection({
                   </div>
                   <div>
                     <h3 className="font-bold text-lg text-foreground">{professorName}</h3>
-                    <p className="text-sm text-muted-foreground">Docente di Scienze Matematiche</p>
+                    <p className="text-sm text-muted-foreground">{headline}</p>
                   </div>
                 </div>
 

@@ -18,6 +18,9 @@ import {
   XIcon,
   Loader2Icon,
   SaveIcon,
+  PencilIcon,
+  CheckIcon,
+  BriefcaseIcon,
 } from "lucide-react";
 import { updateProfile } from "../actions/profile.actions";
 
@@ -25,10 +28,13 @@ interface ProfileData {
   id: string;
   first_name?: string | null;
   last_name?: string | null;
+  headline?: string | null;
   email?: string | null;
   phone?: string | null;
   bio?: string | null;
   teaching_subjects?: string[] | null;
+  subject_details?: Record<string, string> | null;
+  suggested_subjects?: string[] | null;
 }
 
 interface ProfileFormProps {
@@ -38,6 +44,9 @@ interface ProfileFormProps {
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [firstName, setFirstName] = React.useState(initialProfile?.first_name || "");
   const [lastName, setLastName] = React.useState(initialProfile?.last_name || "");
+  const [headline, setHeadline] = React.useState(
+    initialProfile?.headline || "Docente di Scienze Matematiche"
+  );
   const [email, setEmail] = React.useState(initialProfile?.email || "");
   const [phone, setPhone] = React.useState(initialProfile?.phone || "");
   const [bio, setBio] = React.useState(initialProfile?.bio || "");
@@ -46,20 +55,30 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       ? initialProfile.teaching_subjects
       : ["Matematica", "Fisica", "Analisi 1"]
   );
-  const [newSubject, setNewSubject] = React.useState("");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [subjectDetails, setSubjectDetails] = React.useState<Record<string, string>>(
+    initialProfile?.subject_details || {}
+  );
+  const [suggestedSubjects, setSuggestedSubjects] = React.useState<string[]>(
+    initialProfile?.suggested_subjects && initialProfile.suggested_subjects.length > 0
+      ? initialProfile.suggested_subjects
+      : [
+          "Matematica",
+          "Fisica",
+          "Analisi 1",
+          "Analisi 2",
+          "Geometria",
+          "Chimica",
+          "Informatica",
+          "Statistica",
+          "Trigonometria",
+        ]
+  );
 
-  const suggestedSubjects = [
-    "Matematica",
-    "Fisica",
-    "Analisi 1",
-    "Analisi 2",
-    "Geometria",
-    "Chimica",
-    "Informatica",
-    "Statistica",
-    "Trigonometria",
-  ];
+  const [newSubject, setNewSubject] = React.useState("");
+  const [newSuggestion, setNewSuggestion] = React.useState("");
+  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
+  const [editingValue, setEditingValue] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleAddSubject = (subjectToAdd?: string) => {
     const term = (subjectToAdd || newSubject).trim();
@@ -81,7 +100,81 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       toast.error("Devi mantenere almeno una materia d'insegnamento.");
       return;
     }
+    const removedName = subjects[indexToRemove];
     setSubjects((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    if (removedName) {
+      setSubjectDetails((prev) => {
+        const next = { ...prev };
+        delete next[removedName];
+        return next;
+      });
+    }
+    if (editingIndex === indexToRemove) {
+      setEditingIndex(null);
+      setEditingValue("");
+    }
+  };
+
+  const startEditingSubject = (index: number) => {
+    setEditingIndex(index);
+    setEditingValue(subjects[index]);
+  };
+
+  const saveEditingSubject = (index: number) => {
+    const term = editingValue.trim();
+    if (!term) {
+      toast.error("Il nome della materia non può essere vuoto.");
+      return;
+    }
+    if (
+      subjects.some(
+        (s, idx) => idx !== index && s.toLowerCase() === term.toLowerCase()
+      )
+    ) {
+      toast.error("Questa materia è già presente nell'elenco.");
+      return;
+    }
+    const oldName = subjects[index];
+    setSubjects((prev) => prev.map((s, idx) => (idx === index ? term : s)));
+    if (oldName && oldName !== term) {
+      setSubjectDetails((prev) => {
+        const next = { ...prev };
+        if (next[oldName]) {
+          next[term] = next[oldName];
+          delete next[oldName];
+        }
+        return next;
+      });
+    }
+    setEditingIndex(null);
+    setEditingValue("");
+  };
+
+  const cancelEditingSubject = () => {
+    setEditingIndex(null);
+    setEditingValue("");
+  };
+
+  const handleSubjectDetailChange = (subjectName: string, text: string) => {
+    setSubjectDetails((prev) => ({
+      ...prev,
+      [subjectName]: text,
+    }));
+  };
+
+  const handleAddSuggestion = () => {
+    const term = newSuggestion.trim();
+    if (!term) return;
+    if (suggestedSubjects.some((s) => s.toLowerCase() === term.toLowerCase())) {
+      toast.error("Questo suggerimento è già presente.");
+      return;
+    }
+    setSuggestedSubjects((prev) => [...prev, term]);
+    setNewSuggestion("");
+  };
+
+  const handleRemoveSuggestion = (sugToRemove: string) => {
+    setSuggestedSubjects((prev) => prev.filter((s) => s !== sugToRemove));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -115,10 +208,13 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       const res = await updateProfile({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        headline: headline.trim() || "Docente di Scienze Matematiche",
         email: email.trim().toLowerCase(),
         phone: phone.trim() || null,
         bio: bio.trim() || null,
         teaching_subjects: subjects,
+        subject_details: subjectDetails,
+        suggested_subjects: suggestedSubjects,
       });
 
       if (!res.success) {
@@ -179,6 +275,23 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </div>
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="headline" className="text-xs font-semibold">
+              Qualifica / Sottotitolo Professionale <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <BriefcaseIcon className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
+              <Input
+                id="headline"
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                className="pl-9"
+                placeholder="Es. Docente di Scienze Matematiche / Ingegnere Informatico"
+                required
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="profEmail" className="text-xs font-semibold">
@@ -218,49 +331,136 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         </CardContent>
       </Card>
 
-      {/* 2. MATERIE INSEGNATE (TAGS INTERATTIVI) */}
+      {/* 2. MATERIE INSEGNATE (TAGS INTERATTIVI & CRUD) */}
       <Card className="border-border shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-bold text-text flex items-center gap-2">
             <BookOpenIcon className="w-5 h-5 text-primary" />
-            Materie Insegnate
+            Materie Insegnate (Gestione & Modifica)
           </CardTitle>
           <CardDescription>
-            Le materie aggiunte qui appariranno come badge in rilievo nella Homepage e nella pagina Contatti.
+            Aggiungi, rinomina o rimuovi le materie insegnate. Le modifiche appariranno immediatamente nella Homepage e nel form di prenotazione.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Badge attivi */}
+          {/* Badge attivi e modifica in linea */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Materie Attive ({subjects.length}):
             </Label>
             <div className="flex flex-wrap gap-2 pt-1">
               {subjects.map((sub, idx) => (
-                <Badge
-                  key={idx}
-                  variant="secondary"
-                  className="bg-primary/10 text-primary border-primary/25 pl-3 pr-1.5 py-1 text-xs font-semibold flex items-center gap-1.5"
+                <div key={sub} className="inline-flex items-center">
+                  {editingIndex === idx ? (
+                    <div className="flex items-center gap-1 bg-background border border-primary rounded-md px-1.5 py-0.5 shadow-sm">
+                      <input
+                        type="text"
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveEditingSubject(idx);
+                          } else if (e.key === "Escape") {
+                            cancelEditingSubject();
+                          }
+                        }}
+                        autoFocus
+                        className="text-xs font-medium bg-transparent border-none outline-none focus:ring-0 w-28 px-1 text-foreground"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => saveEditingSubject(idx)}
+                        className="p-1 text-primary hover:bg-primary/10 rounded transition-colors"
+                        title="Salva modifica materia"
+                      >
+                        <CheckIcon className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditingSubject}
+                        className="p-1 text-muted-foreground hover:bg-muted rounded transition-colors"
+                        title="Annulla"
+                      >
+                        <XIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary border-primary/25 pl-3 pr-1 py-1 text-xs font-semibold flex items-center gap-1.5 group"
+                    >
+                      <span>{sub}</span>
+                      <button
+                        type="button"
+                        onClick={() => startEditingSubject(idx)}
+                        className="w-4 h-4 rounded hover:bg-primary/20 flex items-center justify-center text-primary/70 hover:text-primary transition-colors ml-0.5"
+                        title={`Modifica o rinomina "${sub}"`}
+                      >
+                        <PencilIcon className="w-2.5 h-2.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSubject(idx)}
+                        className="w-4 h-4 rounded-full hover:bg-destructive/20 hover:text-destructive flex items-center justify-center transition-colors"
+                        title={`Rimuovi "${sub}"`}
+                      >
+                        <XIcon className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Descrizioni Personalizzate delle Materie (Card nella Home) */}
+          <div className="space-y-3 pt-3 border-t border-border">
+            <div>
+              <Label className="text-xs font-bold text-foreground uppercase tracking-wider block">
+                Descrizione e Obiettivi per ciascuna materia (Homepage):
+              </Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Personalizza il testo esplicativo che viene mostrato nelle schede della sezione &ldquo;Materie e Ambiti di Insegnamento&rdquo;.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {subjects.map((sub) => (
+                <div
+                  key={sub}
+                  className="p-3.5 rounded-lg border border-border bg-muted/20 space-y-1.5"
                 >
-                  <span>{sub}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSubject(idx)}
-                    className="w-4 h-4 rounded-full hover:bg-primary/20 flex items-center justify-center transition-colors"
-                    title={`Rimuovi ${sub}`}
-                  >
-                    <XIcon className="w-3 h-3" />
-                  </button>
-                </Badge>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                      <BookOpenIcon className="w-3.5 h-3.5" />
+                      {sub}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {(subjectDetails[sub] || "").length}/250
+                    </span>
+                  </div>
+                  <Input
+                    value={
+                      subjectDetails[sub] !== undefined
+                        ? subjectDetails[sub]
+                        : "Supporto completo su teoria, esercizi svolti, simulazioni di verifica ed esami."
+                    }
+                    onChange={(e) => handleSubjectDetailChange(sub, e.target.value)}
+                    placeholder="Es. Approfondimento su limiti, derivate, integrali e studio di funzioni per esami universitari."
+                    className="text-xs h-9 bg-background"
+                    maxLength={250}
+                  />
+                </div>
               ))}
             </div>
           </div>
 
           {/* Aggiunta nuova materia */}
-          <div className="space-y-2 pt-2 border-t border-border">
+          <div className="space-y-2 pt-3 border-t border-border">
             <Label htmlFor="newSubjectInput" className="text-xs font-semibold">
-              Aggiungi nuova materia:
+              Aggiungi nuova materia d&apos;insegnamento:
             </Label>
             <div className="flex gap-2">
               <Input
@@ -268,7 +468,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Es. Elettronica, Statistica, Economia..."
+                placeholder="Es. Lingua Inglese, Diritto, Economia Aziendale..."
                 className="text-xs sm:text-sm"
               />
               <Button
@@ -282,24 +482,79 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               </Button>
             </div>
 
-            {/* Suggerimenti rapidi */}
-            <div className="pt-2">
-              <span className="text-[11px] text-muted-foreground block mb-1">
-                Suggerimenti veloci (clicca per aggiungere):
-              </span>
+            {/* Suggerimenti rapidi (personalizzabili ed eliminabili) */}
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-muted-foreground block">
+                  Suggerimenti rapidi (clicca per aggiungere alle materie o rimuovi dai suggerimenti):
+                </span>
+              </div>
+
               <div className="flex flex-wrap gap-1.5">
-                {suggestedSubjects
-                  .filter((s) => !subjects.some((cur) => cur.toLowerCase() === s.toLowerCase()))
-                  .map((s, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleAddSubject(s)}
-                      className="px-2 py-0.5 rounded-md border border-border bg-muted/40 hover:bg-muted text-[11px] text-muted-foreground hover:text-text transition-colors"
+                {suggestedSubjects.map((sug) => {
+                  const isAlreadyAdded = subjects.some(
+                    (cur) => cur.toLowerCase() === sug.toLowerCase()
+                  );
+
+                  return (
+                    <div
+                      key={sug}
+                      className="inline-flex items-center rounded-md border border-border bg-muted/40 text-[11px] overflow-hidden"
                     >
-                      + {s}
-                    </button>
-                  ))}
+                      <button
+                        type="button"
+                        onClick={() => handleAddSubject(sug)}
+                        disabled={isAlreadyAdded}
+                        className={`px-2 py-0.5 transition-colors ${
+                          isAlreadyAdded
+                            ? "text-muted-foreground/60 cursor-not-allowed bg-muted/60"
+                            : "text-foreground hover:text-primary hover:bg-muted font-medium"
+                        }`}
+                        title={
+                          isAlreadyAdded
+                            ? "Materia già aggiunta"
+                            : `Aggiungi "${sug}" alle materie insegnate`
+                        }
+                      >
+                        + {sug}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSuggestion(sug)}
+                        className="px-1.5 py-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 border-l border-border transition-colors"
+                        title={`Elimina "${sug}" dai suggerimenti`}
+                      >
+                        <XIcon className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Form aggiunta nuovo suggerimento personalizzato */}
+              <div className="flex items-center gap-2 pt-1 max-w-sm">
+                <Input
+                  value={newSuggestion}
+                  onChange={(e) => setNewSuggestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSuggestion();
+                    }
+                  }}
+                  placeholder="Nuovo suggerimento rapido..."
+                  className="text-xs h-7 bg-background"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAddSuggestion}
+                  className="h-7 text-xs px-2 text-primary hover:bg-primary/10 shrink-0"
+                >
+                  <PlusIcon className="w-3.5 h-3.5 mr-1" />
+                  Salva Suggerimento
+                </Button>
               </div>
             </div>
           </div>

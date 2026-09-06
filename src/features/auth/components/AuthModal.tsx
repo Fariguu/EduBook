@@ -30,22 +30,25 @@ export function AuthModal() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isOpen = searchParams.get("auth") === "login";
+  const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"login" | "forgot">("login");
   const [loading, setLoading] = useState(false);
 
-  // Sync modal view when opened
+  // Sync modal view & open state when URL search param changes
   useEffect(() => {
-    if (isOpen) {
+    const shouldBeOpen = searchParams.get("auth") === "login";
+    setIsOpen(shouldBeOpen);
+    if (shouldBeOpen) {
       setView("login");
     }
-  }, [isOpen]);
+  }, [searchParams]);
 
   const handleClose = () => {
+    setIsOpen(false);
     const params = new URLSearchParams(searchParams.toString());
     params.delete("auth");
     const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
   // Login Form
@@ -77,9 +80,10 @@ export function AuthModal() {
       toast.error(result.error);
     } else {
       toast.success("Accesso effettuato con successo!");
+      setIsOpen(false);
       resetLoginForm();
-      handleClose();
-      router.push("/dashboard");
+      router.replace("/dashboard");
+      router.refresh();
     }
   };
 
@@ -99,7 +103,7 @@ export function AuthModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-[420px] p-6 overflow-hidden">
+      <DialogContent className="sm:max-w-[420px] p-6 overflow-hidden bg-card text-card-foreground border border-border shadow-2xl">
         <AnimatePresence mode="wait">
           {view === "login" ? (
             <motion.div

@@ -1,13 +1,21 @@
 "use server";
 
+import { z } from "zod";
 import { requireAuth } from "@/features/auth/utils/require-auth";
 import { createAdminClient } from "@/utils/supabase/server";
 import { profileSchema, type ProfileInput } from "../schemas/profile.schema";
+import { updatePasswordSchema } from "@/features/auth/schemas/auth.schema";
 import { revalidatePath } from "next/cache";
 
 export interface ProfileActionResult {
   success: boolean;
   error?: string;
+}
+
+export interface CredentialsInput {
+  email?: string;
+  newPassword?: string;
+  confirmPassword?: string;
 }
 
 /**
@@ -20,7 +28,7 @@ export async function getProfile() {
   try {
     const { data, error } = await admin
       .from("profiles")
-      .select("id, first_name, last_name, email, phone, bio, teaching_subjects, avatar_url")
+      .select("id, first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects, avatar_url")
       .eq("id", user.id)
       .single();
 
@@ -29,7 +37,10 @@ export async function getProfile() {
       return null;
     }
 
-    return data;
+    return {
+      ...data,
+      authEmail: user.email || data.email || "",
+    };
   } catch (err) {
     console.error("[getProfile] Errore inatteso:", err);
     return null;
@@ -50,7 +61,7 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
     };
   }
 
-  const { first_name, last_name, email, phone, bio, teaching_subjects } = validation.data;
+  const { first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, suggested_subjects } = validation.data;
   const admin = createAdminClient();
 
   try {
@@ -59,10 +70,13 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
       .update({
         first_name,
         last_name,
+        headline: headline || "Docente di Scienze Matematiche",
         email,
         phone: phone || null,
         bio: bio || null,
         teaching_subjects,
+        subject_details: subject_details || {},
+        suggested_subjects: suggested_subjects || [],
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);
@@ -73,6 +87,14 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
         success: false,
         error: "Impossibile aggiornare il profilo. Riprova più tardi.",
       };
+    }
+
+    // Sincronizza l'email in auth.users se modificata
+    if (user.email && user.email.toLowerCase() !== email.toLowerCase()) {
+      await admin.auth.admin.updateUserById(user.id, {
+        email,
+        email_confirm: true,
+      });
     }
 
     // Revalidate tutte le pagine che mostrano dati del professore
@@ -88,6 +110,92 @@ export async function updateProfile(input: ProfileInput): Promise<ProfileActionR
     return {
       success: false,
       error: "Si è verificato un errore durante il salvataggio.",
+    };
+  }
+}
+
+/**
+ * Aggiorna le credenziali di accesso del professore (email e/o password).
+ */
+export async function updateCredentials(input: CredentialsInput): Promise<ProfileActionResult> {
+  const { user } = await requireAuth();
+  const admin = createAdminClient();
+
+  try {
+    // 1. Aggiornamento Email se fornita e modificata
+    if (input.email?.trim()) {
+      const normalizedEmail = input.email.trim().toLowerCase();
+      const emailValidation = z
+        .string()
+        .email("Inserisci un indirizzo email valido")
+        .safeParse(normalizedEmail);
+
+      if (!emailValidation.success) {
+        return {
+          success: false,
+          error: emailValidation.error.issues[0]?.message || "Email non valida",
+        };
+      }
+
+      const { error: authError } = await admin.auth.admin.updateUserById(user.id, {
+        email: normalizedEmail,
+        email_confirm: true,
+      });
+
+      if (authError) {
+        console.error("[updateCredentials] Errore update email auth:", authError);
+        return {
+          success: false,
+          error: "Impossibile aggiornare l'email di accesso: " + authError.message,
+        };
+      }
+
+      // Sincronizza anche la tabella dei profili
+      await admin
+        .from("profiles")
+        .update({
+          email: normalizedEmail,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+    }
+
+    // 2. Aggiornamento Password se fornita
+    if (input.newPassword) {
+      const passwordValidation = updatePasswordSchema.safeParse({
+        newPassword: input.newPassword,
+        confirmPassword: input.confirmPassword || "",
+      });
+
+      if (!passwordValidation.success) {
+        return {
+          success: false,
+          error: passwordValidation.error.issues[0]?.message || "Password non valida",
+        };
+      }
+
+      const { error: pwdError } = await admin.auth.admin.updateUserById(user.id, {
+        password: input.newPassword,
+      });
+
+      if (pwdError) {
+        console.error("[updateCredentials] Errore update password auth:", pwdError);
+        return {
+          success: false,
+          error: "Impossibile aggiornare la password: " + pwdError.message,
+        };
+      }
+    }
+
+    revalidatePath("/dashboard/profilo");
+    revalidatePath("/dashboard");
+    revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    console.error("[updateCredentials] Errore inatteso:", err);
+    return {
+      success: false,
+      error: "Si è verificato un errore durante l'aggiornamento delle credenziali.",
     };
   }
 }

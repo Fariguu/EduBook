@@ -157,18 +157,18 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
           {/* SEZIONE SPOSTAMENTO LEZIONE */}
           <div className="pt-2 border-t border-border">
             {currentLesson.reschedule_requested ? (
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 space-y-1.5">
-                <div className="flex items-center gap-2 font-semibold text-sm">
-                  <AlertCircleIcon className="w-4 h-4" />
+              <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-600/80 text-amber-950 dark:text-amber-100 space-y-1.5 shadow-sm">
+                <div className="flex items-center gap-2 font-bold text-sm text-amber-900 dark:text-amber-200">
+                  <AlertCircleIcon className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
                   Richiesta di Spostamento Inoltrata
                 </div>
-                <p className="text-xs leading-relaxed">
+                <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
                   Hai richiesto di spostare questa lezione. Il professore ha ricevuto la tua notifica
-                  e ti ricontatterà all&apos;indirizzo <strong>{currentLesson.guest_email}</strong> per
+                  e ti ricontatterà all&apos;indirizzo <strong className="underline decoration-amber-400">{currentLesson.guest_email}</strong> per
                   concordare un nuovo appuntamento.
                 </p>
                 {currentLesson.reschedule_notes && (
-                  <p className="text-xs italic pt-1 border-t border-amber-500/20">
+                  <p className="text-xs italic pt-1.5 border-t border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
                     &ldquo;{currentLesson.reschedule_notes}&rdquo;
                   </p>
                 )}
