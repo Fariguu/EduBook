@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getProfile } from "@/features/profile/actions/profile.actions";
 import { ProfileForm } from "@/features/profile/components/ProfileForm";
 import { WhyChooseUsCard } from "@/features/profile/components/WhyChooseUsCard";
+import { HeroCardConfigCard } from "@/features/profile/components/HeroCardConfigCard";
 import { CredentialsCard } from "@/features/profile/components/CredentialsCard";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -15,6 +16,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ProfiloPage() {
   const profile = await getProfile();
+
+  const professorName =
+    profile?.first_name || profile?.last_name
+      ? `Prof. ${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+      : "Professore";
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -39,7 +45,14 @@ export default async function ProfiloPage() {
 
       <ProfileForm initialProfile={profile} />
 
-      {/* Personalizzazione Sezione "Perché Scegliere Questo Percorso" */}
+      {/* Personalizzazione Card Informativa Hero */}
+      <HeroCardConfigCard
+        initialData={profile?.hero_card}
+        professorName={professorName}
+        headline={profile?.headline}
+      />
+
+      {/* Personalizzazione Sezione "Gestione Percorso" */}
       <WhyChooseUsCard initialData={profile?.why_choose_us} />
 
       {/* Sezione Credenziali di Accesso e Sicurezza */}

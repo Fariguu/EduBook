@@ -79,3 +79,33 @@ export const whyChooseUsSchema = z.object({
 });
 
 export type WhyChooseUsInput = z.infer<typeof whyChooseUsSchema>;
+
+export const heroCardItemSchema = z.object({
+  label: z
+    .string()
+    .trim()
+    .min(1, { message: "L'etichetta è obbligatoria" })
+    .max(60, { message: "L'etichetta non può superare 60 caratteri" }),
+  value: z
+    .string()
+    .trim()
+    .min(1, { message: "Il valore è obbligatorio" })
+    .max(60, { message: "Il valore non può superare 60 caratteri" }),
+});
+
+export const heroCardSchema = z.object({
+  items: z
+    .array(heroCardItemSchema)
+    .min(1, { message: "Inserisci almeno un elemento informativo" })
+    .max(5, { message: "Puoi inserire al massimo 5 elementi informativi" }),
+  footnote: z
+    .string()
+    .trim()
+    .max(150, { message: "La nota non può superare 150 caratteri" })
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+});
+
+export type HeroCardInput = z.infer<typeof heroCardSchema>;
+export type HeroCardItemInput = z.infer<typeof heroCardItemSchema>;

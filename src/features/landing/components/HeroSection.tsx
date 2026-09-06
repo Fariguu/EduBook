@@ -2,12 +2,23 @@ import Link from "next/link";
 import { Calendar, Mail, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DEFAULT_HERO_CARD,
+  type HeroCardData,
+} from "@/features/profile/constants/hero-card.constants";
+
+const VALUE_COLOR_CLASSES = [
+  "text-primary font-semibold",
+  "text-secondary font-semibold",
+  "text-foreground font-semibold",
+];
 
 interface HeroSectionProps {
   professorName?: string;
   headline?: string;
   bio?: string;
   subjects?: string[];
+  heroCard?: HeroCardData;
 }
 
 export function HeroSection({
@@ -15,6 +26,7 @@ export function HeroSection({
   headline = "Docente di Scienze Matematiche",
   bio = "Docente qualificato con pluriennale esperienza nell'insegnamento di Matematica, Fisica e Analisi. Metodo personalizzato per scuola superiore e università.",
   subjects = ["Matematica", "Fisica", "Analisi 1"],
+  heroCard,
 }: HeroSectionProps) {
   return (
     <section className="relative overflow-hidden py-16 md:py-24 bg-gradient-to-b from-background via-muted/30 to-background transition-colors">
@@ -94,23 +106,21 @@ export function HeroSection({
                 </div>
 
                 <div className="space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-                    <span className="font-medium text-foreground">Lezioni disponibili</span>
-                    <span className="text-primary font-semibold">Online & In Presenza</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-                    <span className="font-medium text-foreground">Prenotazione</span>
-                    <span className="text-secondary font-semibold">Diretta & Istantanea</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-                    <span className="font-medium text-foreground">Flessibilità</span>
-                    <span className="text-foreground font-semibold">Slot Personalizzabili</span>
-                  </div>
+                  {(heroCard?.items?.length ? heroCard.items : DEFAULT_HERO_CARD.items).map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/40 gap-3">
+                      <span className="font-medium text-foreground truncate">{item.label}</span>
+                      <span className={`${VALUE_COLOR_CLASSES[index % VALUE_COLOR_CLASSES.length]} shrink-0`}>
+                        {item.value}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="pt-2 text-center text-xs text-muted-foreground">
-                  Nessun account studente richiesto — prenotazione diretta in 2 minuti.
-                </div>
+                {(heroCard?.footnote ?? DEFAULT_HERO_CARD.footnote) ? (
+                  <div className="pt-2 text-center text-xs text-muted-foreground">
+                    {heroCard?.footnote ?? DEFAULT_HERO_CARD.footnote}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

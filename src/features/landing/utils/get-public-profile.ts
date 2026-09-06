@@ -3,6 +3,10 @@ import {
   DEFAULT_WHY_CHOOSE_US,
   type WhyChooseUsData,
 } from "@/features/profile/constants/why-choose-us.constants";
+import {
+  DEFAULT_HERO_CARD,
+  type HeroCardData,
+} from "@/features/profile/constants/hero-card.constants";
 
 export interface PublicProfessorProfile {
   isAuthenticated: boolean;
@@ -14,6 +18,7 @@ export interface PublicProfessorProfile {
   subjects: string[];
   subjectDetails: Record<string, string>;
   whyChooseUs: WhyChooseUsData;
+  heroCard: HeroCardData;
 }
 
 interface RawProfileData {
@@ -26,6 +31,7 @@ interface RawProfileData {
   teaching_subjects?: string[] | null;
   subject_details?: Record<string, string> | null;
   why_choose_us?: unknown;
+  hero_card?: unknown;
 }
 
 const DEFAULT_PROFILE: Omit<PublicProfessorProfile, "isAuthenticated"> = {
@@ -37,6 +43,7 @@ const DEFAULT_PROFILE: Omit<PublicProfessorProfile, "isAuthenticated"> = {
   subjects: ["Matematica", "Fisica", "Analisi 1"],
   subjectDetails: {},
   whyChooseUs: DEFAULT_WHY_CHOOSE_US,
+  heroCard: DEFAULT_HERO_CARD,
 };
 
 function parseWhyChooseUs(raw: unknown): WhyChooseUsData {
@@ -53,6 +60,21 @@ function parseWhyChooseUs(raw: unknown): WhyChooseUsData {
       title: p.title || "",
       description: p.description || "",
     })),
+  };
+}
+
+function parseHeroCard(raw: unknown): HeroCardData {
+  if (!raw || typeof raw !== "object") return DEFAULT_HERO_CARD;
+  const obj = raw as Partial<HeroCardData>;
+  if (!Array.isArray(obj.items) || obj.items.length === 0) {
+    return DEFAULT_HERO_CARD;
+  }
+  return {
+    items: obj.items.map((it) => ({
+      label: typeof it.label === "string" ? it.label : "",
+      value: typeof it.value === "string" ? it.value : "",
+    })),
+    footnote: typeof obj.footnote === "string" ? obj.footnote : DEFAULT_HERO_CARD.footnote,
   };
 }
 
@@ -74,6 +96,7 @@ function parseProfile(profile: RawProfileData | null): Omit<PublicProfessorProfi
         ? profile.subject_details
         : DEFAULT_PROFILE.subjectDetails,
     whyChooseUs: parseWhyChooseUs(profile.why_choose_us),
+    heroCard: parseHeroCard(profile.hero_card),
   };
 }
 
@@ -87,7 +110,7 @@ export async function getPublicProfessorProfile(): Promise<PublicProfessorProfil
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, why_choose_us")
+      .select("first_name, last_name, headline, email, phone, bio, teaching_subjects, subject_details, why_choose_us, hero_card")
       .limit(1)
       .maybeSingle();
 

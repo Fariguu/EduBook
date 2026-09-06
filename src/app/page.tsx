@@ -9,14 +9,20 @@ import { getPublicProfessorProfile } from "@/features/landing/utils/get-public-p
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { professorName, headline, bio, subjects, subjectDetails, whyChooseUs, isAuthenticated } =
+  const { professorName, headline, bio, subjects, subjectDetails, whyChooseUs, heroCard, isAuthenticated } =
     await getPublicProfessorProfile();
 
   return (
     <div className="flex flex-col min-h-screen">
       <PublicNavbar isAuthenticated={isAuthenticated} />
       <main className="flex-1">
-        <HeroSection professorName={professorName} headline={headline} bio={bio} subjects={subjects} />
+        <HeroSection
+          professorName={professorName}
+          headline={headline}
+          bio={bio}
+          subjects={subjects}
+          heroCard={heroCard}
+        />
         <SubjectBadges subjects={subjects} subjectDetails={subjectDetails} />
         <BioSection data={whyChooseUs} />
         <CTASection />

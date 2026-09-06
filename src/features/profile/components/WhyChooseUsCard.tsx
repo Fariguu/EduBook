@@ -165,10 +165,10 @@ export function WhyChooseUsCard({ initialData }: WhyChooseUsCardProps) {
         <div>
           <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
             <SparklesIcon className="w-5 h-5 text-primary" />
-            <span>Sezione &ldquo;Perché Scegliere Questo Percorso&rdquo;</span>
+            <span>Gestione Percorso</span>
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm mt-1">
-            Personalizza i testi e le schede dei punti di forza mostrati nella landing page pubblica.
+            Personalizza i testi e le schede del percorso formativo mostrati nella landing page pubblica.
           </CardDescription>
         </div>
 
