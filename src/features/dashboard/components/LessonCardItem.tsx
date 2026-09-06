@@ -12,9 +12,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardLesson } from "../types/dashboard.types";
 
 interface LessonCardItemProps {
-  lesson: DashboardLesson;
-  badge: React.ReactNode;
-  footer: React.ReactNode;
+  readonly lesson: DashboardLesson;
+  readonly badge: React.ReactNode;
+  readonly footer: React.ReactNode;
 }
 
 export function LessonCardItem({ lesson, badge, footer }: LessonCardItemProps) {

@@ -123,7 +123,7 @@ export async function updateCredentials(input: CredentialsInput): Promise<Profil
 
   try {
     // 1. Aggiornamento Email se fornita e modificata
-    if (input.email && input.email.trim()) {
+    if (input.email?.trim()) {
       const normalizedEmail = input.email.trim().toLowerCase();
       const emailValidation = z
         .string()

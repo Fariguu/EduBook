@@ -113,7 +113,7 @@ export function BookingCalendar({
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/;
     if (!guestEmail.trim() || !emailRegex.test(guestEmail.trim())) {
       toast.error("Inserisci un indirizzo email valido.");
       return;

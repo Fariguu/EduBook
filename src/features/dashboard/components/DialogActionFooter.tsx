@@ -4,11 +4,11 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2Icon } from "lucide-react";
 
 interface DialogActionFooterProps {
-  onCancel: () => void;
-  isSubmitting: boolean;
-  submitLabel: string;
-  submittingLabel?: string;
-  submitVariant?: "default" | "destructive";
+  readonly onCancel: () => void;
+  readonly isSubmitting: boolean;
+  readonly submitLabel: string;
+  readonly submittingLabel?: string;
+  readonly submitVariant?: "default" | "destructive";
 }
 
 export function DialogActionFooter({

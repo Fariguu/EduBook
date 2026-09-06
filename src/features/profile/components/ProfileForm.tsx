@@ -351,7 +351,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </Label>
             <div className="flex flex-wrap gap-2 pt-1">
               {subjects.map((sub, idx) => (
-                <div key={idx} className="inline-flex items-center">
+                <div key={sub} className="inline-flex items-center">
                   {editingIndex === idx ? (
                     <div className="flex items-center gap-1 bg-background border border-primary rounded-md px-1.5 py-0.5 shadow-sm">
                       <input
@@ -427,9 +427,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </div>
 
             <div className="space-y-3">
-              {subjects.map((sub, idx) => (
+              {subjects.map((sub) => (
                 <div
-                  key={idx}
+                  key={sub}
                   className="p-3.5 rounded-lg border border-border bg-muted/20 space-y-1.5"
                 >
                   <div className="flex items-center justify-between">
@@ -491,14 +491,14 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
               </div>
 
               <div className="flex flex-wrap gap-1.5">
-                {suggestedSubjects.map((sug, i) => {
+                {suggestedSubjects.map((sug) => {
                   const isAlreadyAdded = subjects.some(
                     (cur) => cur.toLowerCase() === sug.toLowerCase()
                   );
 
                   return (
                     <div
-                      key={i}
+                      key={sug}
                       className="inline-flex items-center rounded-md border border-border bg-muted/40 text-[11px] overflow-hidden"
                     >
                       <button

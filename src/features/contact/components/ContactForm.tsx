@@ -41,7 +41,7 @@ export function ContactForm() {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@.]+\.[^\s@.]+$/;
     if (!email.trim() || !emailRegex.test(email.trim())) {
       toast.error("Inserisci un indirizzo email valido con un dominio valido.");
       return;

@@ -3,22 +3,23 @@ import { PublicNavbar } from "./PublicNavbar";
 import { Footer } from "./Footer";
 
 interface PublicLayoutProps {
-  isAuthenticated?: boolean;
-  maxWidth?: "4xl" | "5xl" | "6xl";
-  children: React.ReactNode;
+  readonly isAuthenticated?: boolean;
+  readonly maxWidth?: "4xl" | "5xl" | "6xl";
+  readonly children: React.ReactNode;
 }
+
+const MAX_WIDTH_CLASSES = {
+  "4xl": "max-w-4xl",
+  "5xl": "max-w-5xl",
+  "6xl": "max-w-6xl",
+} as const;
 
 export function PublicLayout({
   isAuthenticated = false,
   maxWidth = "5xl",
   children,
 }: PublicLayoutProps) {
-  const maxWidthClass =
-    maxWidth === "4xl"
-      ? "max-w-4xl"
-      : maxWidth === "6xl"
-      ? "max-w-6xl"
-      : "max-w-5xl";
+  const maxWidthClass = MAX_WIDTH_CLASSES[maxWidth] ?? "max-w-5xl";
 
   return (
     <div className="flex flex-col min-h-screen bg-background">

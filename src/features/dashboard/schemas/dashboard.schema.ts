@@ -11,7 +11,7 @@ export const createSlotSchema = z
     (data) => {
       const start = new Date(data.startTime).getTime();
       const end = new Date(data.endTime).getTime();
-      return !isNaN(start) && !isNaN(end) && end > start;
+      return !Number.isNaN(start) && !Number.isNaN(end) && end > start;
     },
     {
       message: "L'orario di fine deve essere successivo all'orario di inizio",
@@ -24,7 +24,7 @@ export const createSlotSchema = z
         if (!data.recurrenceEndDate) return false;
         const start = new Date(data.startTime).getTime();
         const recEnd = new Date(data.recurrenceEndDate).getTime();
-        return !isNaN(recEnd) && recEnd > start;
+        return !Number.isNaN(recEnd) && recEnd > start;
       }
       return true;
     },
@@ -46,7 +46,7 @@ export const editLessonTimeSchema = z
     (data) => {
       const start = new Date(data.newStartTime).getTime();
       const end = new Date(data.newEndTime).getTime();
-      return !isNaN(start) && !isNaN(end) && end > start;
+      return !Number.isNaN(start) && !Number.isNaN(end) && end > start;
     },
     {
       message: "L'orario di fine deve essere successivo all'orario di inizio",

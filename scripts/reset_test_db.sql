@@ -12,6 +12,7 @@ TRUNCATE TABLE public.contacts CASCADE;
 DO $$
 DECLARE
   v_admin_email TEXT := 'gabri@example.com';
+  v_provider_email CONSTANT TEXT := 'email';
   v_user_id UUID;
 BEGIN
   -- Trova l'id utente in auth.users
@@ -22,7 +23,7 @@ BEGIN
     UPDATE auth.users
     SET encrypted_password = extensions.crypt('PredefinedPassword123!', extensions.gen_salt('bf', 10)),
         email_confirmed_at = COALESCE(email_confirmed_at, now()),
-        raw_app_meta_data = '{"provider": "email", "providers": ["email"]}'::jsonb,
+        raw_app_meta_data = jsonb_build_object('provider', v_provider_email, 'providers', jsonb_build_array(v_provider_email)),
         raw_user_meta_data = jsonb_build_object('first_name', 'Gabriele', 'last_name', 'Farigu'),
         confirmation_token = COALESCE(confirmation_token, ''),
         recovery_token = COALESCE(recovery_token, ''),
@@ -36,7 +37,7 @@ BEGIN
     WHERE id = v_user_id;
 
     -- Garantisci la presenza del record corrispondente in auth.identities
-    IF NOT EXISTS (SELECT 1 FROM auth.identities WHERE user_id = v_user_id AND provider = 'email') THEN
+    IF NOT EXISTS (SELECT 1 FROM auth.identities WHERE user_id = v_user_id AND provider = v_provider_email) THEN
       INSERT INTO auth.identities (
         id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
       ) VALUES (
@@ -44,7 +45,7 @@ BEGIN
         v_user_id::text,
         v_user_id,
         jsonb_build_object('sub', v_user_id::text, 'email', v_admin_email, 'email_verified', true),
-        'email',
+        v_provider_email,
         now(),
         now(),
         now()
@@ -53,7 +54,7 @@ BEGIN
       UPDATE auth.identities
       SET identity_data = jsonb_build_object('sub', v_user_id::text, 'email', v_admin_email, 'email_verified', true),
           updated_at = now()
-      WHERE user_id = v_user_id AND provider = 'email';
+      WHERE user_id = v_user_id AND provider = v_provider_email;
     END IF;
 
     -- Upsert nel profilo public.profiles

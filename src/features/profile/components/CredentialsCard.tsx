@@ -18,7 +18,7 @@ import {
 import { updateCredentials } from "../actions/profile.actions";
 
 interface CredentialsCardProps {
-  initialEmail: string;
+  readonly initialEmail: string;
 }
 
 export function CredentialsCard({ initialEmail }: CredentialsCardProps) {
@@ -35,7 +35,7 @@ export function CredentialsCard({ initialEmail }: CredentialsCardProps) {
     e.preventDefault();
     const cleanEmail = emailInput.trim().toLowerCase();
 
-    if (!cleanEmail || !cleanEmail.includes("@")) {
+    if (!cleanEmail?.includes("@")) {
       toast.error("Inserisci un indirizzo email valido.");
       return;
     }
@@ -79,7 +79,7 @@ export function CredentialsCard({ initialEmail }: CredentialsCardProps) {
       return;
     }
 
-    if (!/[0-9]/.test(newPassword)) {
+    if (!/\d/.test(newPassword)) {
       toast.error("La password deve contenere almeno un numero.");
       return;
     }

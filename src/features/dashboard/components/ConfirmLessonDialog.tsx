@@ -17,12 +17,12 @@ import { confirmLesson } from "../actions/dashboard.actions";
 import { DialogActionFooter } from "./DialogActionFooter";
 
 interface ConfirmLessonDialogProps {
-  lessonId: string;
-  guestName?: string | null;
-  guestEmail?: string | null;
-  startTime: string;
-  endTime: string;
-  trigger?: React.ReactNode;
+  readonly lessonId: string;
+  readonly guestName?: string | null;
+  readonly guestEmail?: string | null;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly trigger?: React.ReactNode;
 }
 
 export function ConfirmLessonDialog({
@@ -65,18 +65,32 @@ export function ConfirmLessonDialog({
 
   return (
     <>
-      <span onClick={() => setOpen(true)} className="inline-block cursor-pointer">
-        {trigger || (
-          <Button
-            type="button"
-            size="sm"
-            className="bg-primary text-white hover:bg-primary/90 text-xs font-semibold px-4 h-9 shadow-sm"
-          >
-            <CheckIcon className="w-4 h-4 mr-1.5" />
-            Conferma
-          </Button>
-        )}
-      </span>
+      {trigger ? (
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          className="inline-block cursor-pointer"
+        >
+          {trigger}
+        </span>
+      ) : (
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className="bg-primary text-white hover:bg-primary/90 text-xs font-semibold px-4 h-9 shadow-sm"
+        >
+          <CheckIcon className="w-4 h-4 mr-1.5" />
+          Conferma
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
 

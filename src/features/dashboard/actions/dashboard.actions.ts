@@ -93,6 +93,98 @@ export async function getDashboardData(): Promise<DashboardData> {
   };
 }
 
+async function createSingleSlot(
+  admin: ReturnType<typeof createAdminClient>,
+  startInitial: Date,
+  endInitial: Date
+): Promise<DashboardActionResult> {
+  const { data: overlapping } = await admin
+    .from("lessons")
+    .select("id")
+    .in("status", ["available", "pending", "confirmed"])
+    .lt("start_time", endInitial.toISOString())
+    .gt("end_time", startInitial.toISOString())
+    .limit(1);
+
+  if (overlapping && overlapping.length > 0) {
+    return {
+      success: false,
+      error: "Esiste già uno slot o una lezione programmata in questo intervallo di orario.",
+    };
+  }
+
+  const { error } = await admin.from("lessons").insert({
+    start_time: startInitial.toISOString(),
+    end_time: endInitial.toISOString(),
+    status: "available",
+    is_available: true,
+  });
+
+  if (error) {
+    console.error("[createSlot] Errore inserimento singolo:", error);
+    return { success: false, error: "Impossibile creare lo slot." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/prenota");
+  return { success: true, count: 1 };
+}
+
+async function createRecurringSlots(
+  admin: ReturnType<typeof createAdminClient>,
+  startInitial: Date,
+  endInitial: Date,
+  recurrenceEndDate: string
+): Promise<DashboardActionResult> {
+  const recEnd = new Date(recurrenceEndDate);
+  recEnd.setHours(23, 59, 59, 999);
+
+  const weeksDiff = Math.min(differenceInWeeks(recEnd, startInitial) + 1, 52);
+  const slotsToInsert = [];
+
+  for (let i = 0; i <= weeksDiff; i++) {
+    const curStart = addWeeks(startInitial, i);
+    const curEnd = addWeeks(endInitial, i);
+
+    if (curStart.getTime() > recEnd.getTime()) break;
+
+    const { data: overlapping } = await admin
+      .from("lessons")
+      .select("id")
+      .in("status", ["available", "pending", "confirmed"])
+      .lt("start_time", curEnd.toISOString())
+      .gt("end_time", curStart.toISOString())
+      .limit(1);
+
+    if (!overlapping || overlapping.length === 0) {
+      slotsToInsert.push({
+        start_time: curStart.toISOString(),
+        end_time: curEnd.toISOString(),
+        status: "available",
+        is_available: true,
+      });
+    }
+  }
+
+  if (slotsToInsert.length === 0) {
+    return {
+      success: false,
+      error: "Nessuno slot generato: gli orari indicati sono già occupati o non validi.",
+    };
+  }
+
+  const { error } = await admin.from("lessons").insert(slotsToInsert);
+
+  if (error) {
+    console.error("[createSlot] Errore inserimento batch ricorrente:", error);
+    return { success: false, error: "Impossibile creare la serie di slot ricorrenti." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/prenota");
+  return { success: true, count: slotsToInsert.length };
+}
+
 /**
  * Crea uno o più slot di disponibilità (singolo o ricorrente settimanale).
  */
@@ -113,7 +205,7 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
     startInitial.setSeconds(0, 0);
     endInitial.setSeconds(0, 0);
 
-    if (isNaN(startInitial.getTime()) || isNaN(endInitial.getTime())) {
+    if (Number.isNaN(startInitial.getTime()) || Number.isNaN(endInitial.getTime())) {
       return { success: false, error: "Date orario non valide." };
     }
 
@@ -134,89 +226,10 @@ export async function createSlot(input: CreateSlotInput): Promise<DashboardActio
     }
 
     if (!isRecurring || !recurrenceEndDate) {
-      // Verifica overlap per slot singolo
-      const { data: overlapping } = await admin
-        .from("lessons")
-        .select("id")
-        .in("status", ["available", "pending", "confirmed"])
-        .lt("start_time", endInitial.toISOString())
-        .gt("end_time", startInitial.toISOString())
-        .limit(1);
-
-      if (overlapping && overlapping.length > 0) {
-        return {
-          success: false,
-          error: "Esiste già uno slot o una lezione programmata in questo intervallo di orario.",
-        };
-      }
-
-      // Slot singolo
-      const { error } = await admin.from("lessons").insert({
-        start_time: startInitial.toISOString(),
-        end_time: endInitial.toISOString(),
-        status: "available",
-        is_available: true,
-      });
-
-      if (error) {
-        console.error("[createSlot] Errore inserimento singolo:", error);
-        return { success: false, error: "Impossibile creare lo slot." };
-      }
-
-      revalidatePath("/dashboard");
-      revalidatePath("/prenota");
-      return { success: true, count: 1 };
+      return await createSingleSlot(admin, startInitial, endInitial);
     }
 
-    // Slot ricorrente: ripete ogni 7 giorni fino alla data limite
-    const recEnd = new Date(recurrenceEndDate);
-    recEnd.setHours(23, 59, 59, 999);
-
-    const weeksDiff = Math.min(differenceInWeeks(recEnd, startInitial) + 1, 52); // Limite di sicurezza: max 52 settimane
-
-    const slotsToInsert = [];
-    for (let i = 0; i <= weeksDiff; i++) {
-      const curStart = addWeeks(startInitial, i);
-      const curEnd = addWeeks(endInitial, i);
-
-      if (curStart.getTime() > recEnd.getTime()) break;
-
-      // Verifica overlap per ciascun slot della serie ricorrente
-      const { data: overlapping } = await admin
-        .from("lessons")
-        .select("id")
-        .in("status", ["available", "pending", "confirmed"])
-        .lt("start_time", curEnd.toISOString())
-        .gt("end_time", curStart.toISOString())
-        .limit(1);
-
-      if (!overlapping || overlapping.length === 0) {
-        slotsToInsert.push({
-          start_time: curStart.toISOString(),
-          end_time: curEnd.toISOString(),
-          status: "available",
-          is_available: true,
-        });
-      }
-    }
-
-    if (slotsToInsert.length === 0) {
-      return {
-        success: false,
-        error: "Nessuno slot generato: gli orari indicati sono già occupati o non validi.",
-      };
-    }
-
-    const { error } = await admin.from("lessons").insert(slotsToInsert);
-
-    if (error) {
-      console.error("[createSlot] Errore inserimento batch ricorrente:", error);
-      return { success: false, error: "Impossibile creare la serie di slot ricorrenti." };
-    }
-
-    revalidatePath("/dashboard");
-    revalidatePath("/prenota");
-    return { success: true, count: slotsToInsert.length };
+    return await createRecurringSlots(admin, startInitial, endInitial, recurrenceEndDate);
   } catch (err) {
     console.error("[createSlot] Errore inatteso:", err);
     return { success: false, error: "Errore imprevisto durante la creazione." };
@@ -391,7 +404,7 @@ export async function updateLessonTime(input: EditLessonTimeInput): Promise<Dash
     startObj.setSeconds(0, 0);
     endObj.setSeconds(0, 0);
 
-    if (isNaN(startObj.getTime()) || isNaN(endObj.getTime())) {
+    if (Number.isNaN(startObj.getTime()) || Number.isNaN(endObj.getTime())) {
       return { success: false, error: "Date orario non valide." };
     }
 

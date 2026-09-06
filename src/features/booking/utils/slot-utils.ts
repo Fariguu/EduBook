@@ -35,7 +35,7 @@ export function generateSlotIntervals(slot: AvailableSlot): TimeSlotOption[] {
   end.setSeconds(0, 0);
 
   const totalMinutes = differenceInMinutes(end, start);
-  if (isNaN(totalMinutes) || totalMinutes <= 0) {
+  if (Number.isNaN(totalMinutes) || totalMinutes <= 0) {
     return [];
   }
 
