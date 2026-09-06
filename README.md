@@ -1,4 +1,4 @@
-﻿# EduBook - Piattaforma di Gestione e Prenotazione Lezioni Private
+# EduBook - Piattaforma di Gestione e Prenotazione Lezioni Private
 
 <div align="center">
 
@@ -144,10 +144,17 @@ CRON_SECRET=your-random-secret
 ```
 
 ### 5. Configurazione Database Supabase
-Apri l **SQL Editor** del tuo progetto Supabase ed esegui:
-1. Gli script di migrazione contenuti nella cartella `scripts/`:
-   - [`scripts/add_why_choose_us_column.sql`](scripts/add_why_choose_us_column.sql): aggiunge le colonne `why_choose_us` e `hero_card` alla tabella `profiles`.
-2. Assicurati che siano presenti le tabelle `profiles`, `lessons`, `contacts` e la funzione RPC `split_and_book_slot` (vedere la [Guida Tecnica](docs/TECHNICAL_DOCS.md#2-modello-del-database-supabase-postgresql)).
+Per inizializzare da zero l intero database con tutte le tabelle, vincoli, indici, trigger, stored procedure RPC e policy di sicurezza (RLS):
+1. Apri la dashboard del tuo progetto Supabase e accedi all **SQL Editor**.
+2. Copia ed esegui il contenuto del file [`scripts/init_database.sql`](scripts/init_database.sql).
+   Questo script esegue in un unico passaggio:
+   - Abilitazione delle estensioni PostgreSQL (`uuid-ossp`, `pgcrypto`).
+   - Creazione dei tipi enumerati (`user_role`, `lesson_status`).
+   - Creazione delle tabelle `profiles`, `lessons` e `contacts` con tutti i vincoli di integrita.
+   - Creazione degli indici di prestazione su date e stati.
+   - Configurazione del trigger per sincronizzare automaticamente il profilo docente alla creazione dell account (`handle_new_user`).
+   - Creazione della stored procedure RPC `split_and_book_slot` per la gestione atomica dei Mega-Slot.
+   - Abilitazione e configurazione della Row Level Security (RLS) su tutte le tabelle.
 
 ### 6. Avvio del Server di Sviluppo
 ```bash

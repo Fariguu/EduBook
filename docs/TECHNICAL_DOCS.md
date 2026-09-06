@@ -1,4 +1,4 @@
-﻿# EduBook - Documentazione Tecnica per Sviluppatori
+# EduBook - Documentazione Tecnica per Sviluppatori
 
 Benvenuto nella documentazione tecnica interna di **EduBook**. Questo documento fornisce una panoramica approfondita dell architettura del software, del modello dei dati su Supabase Postgres, di tutte le Server Actions implementate, dei flussi operativi e delle linee guida architetturali per estendere il sistema nel rispetto degli standard di qualita (SonarCloud Rating A, Zero Code Smells, Zero Duplication).
 
@@ -68,7 +68,8 @@ src/
 
 ## 2. Modello del Database Supabase (PostgreSQL)
 
-EduBook utilizza PostgreSQL gestito da Supabase. Di seguito vengono descritte le tabelle, i tipi e le funzioni stored.
+EduBook utilizza PostgreSQL gestito da Supabase. L intero schema con DDL, vincoli di integrita, stored procedure RPC e policy RLS e centralizzato nello script unico [scripts/init_database.sql](../scripts/init_database.sql).
+Di seguito vengono descritte in dettaglio le tabelle, i tipi e le funzioni stored.
 
 ### 2.1 Enumerazioni (Custom Types)
 
