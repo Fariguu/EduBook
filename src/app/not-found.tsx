@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { FileQuestion, Home } from "lucide-react";
 
 export default function NotFound() {
@@ -17,11 +17,9 @@ export default function NotFound() {
       <p className="max-w-md text-sm sm:text-base text-muted-foreground mb-8">
         La pagina che stai cercando non esiste, è stata spostata o il link inserito non è corretto.
       </p>
-      <Link href="/">
-        <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-          <Home className="h-4 w-4" />
-          Torna alla Home
-        </Button>
+      <Link href="/" className={buttonVariants({ variant: "default", className: "gap-2" })}>
+        <Home className="h-4 w-4" />
+        Torna alla Home
       </Link>
     </div>
   );
