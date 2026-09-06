@@ -20,6 +20,9 @@ import {
   Loader2Icon,
   InboxIcon,
   RotateCwIcon,
+  CheckIcon,
+  XIcon,
+  PencilIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -259,7 +262,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
         {/* COLONNA DESTRA: AREA OPERAZIONI A DIMENSIONE STABILE */}
         <div className="flex-1 min-w-0 w-full min-h-[520px]">
 
-      {/* 1. TAB: LEZIONI IN ATTESA */}
+      {/* 1. TAB: LEZIONI IN ATTESA (Layout 1: DATA ORA NOME | MAIL X CHECK - NOTE ALTEZZA VARIABILE) */}
       <TabsContent value="in-attesa" className="w-full space-y-4">
         {data.pendingLessons.length === 0 ? (
           <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
@@ -281,25 +284,49 @@ export function LessonTabs({ data }: LessonTabsProps) {
                 <LessonCardItem
                   key={lesson.id}
                   lesson={lesson}
-                  badge={
-                    <Badge className="w-fit bg-amber-500/10 text-amber-700 border-amber-500/20 text-xs">
-                      In Attesa di Conferma
-                    </Badge>
-                  }
-                  footer={
-                    <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-border">
+                  topActions={
+                    <div className="flex items-center gap-1.5">
+                      {lesson.guest_email && (
+                        <a
+                          href={`mailto:${lesson.guest_email}?subject=${encodeURIComponent("Richiesta di lezione EduBook")}`}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          title={`Invia email a ${lesson.guest_email}`}
+                          aria-label={`Invia email a ${lesson.guest_name || "studente"}`}
+                        >
+                          <MailIcon className="w-4 h-4" />
+                        </a>
+                      )}
+
                       <RejectLessonDialog
                         lessonId={lesson.id}
                         guestName={lesson.guest_name}
                         guestEmail={lesson.guest_email}
+                        trigger={
+                          <div
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                            title="Rifiuta richiesta"
+                            aria-label="Rifiuta richiesta"
+                          >
+                            <XIcon className="w-4 h-4" />
+                          </div>
+                        }
                       />
-                      <EditLessonDialog lesson={lesson} />
+
                       <ConfirmLessonDialog
                         lessonId={lesson.id}
                         guestName={lesson.guest_name}
                         guestEmail={lesson.guest_email}
                         startTime={lesson.start_time}
                         endTime={lesson.end_time}
+                        trigger={
+                          <div
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary/30 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+                            title="Conferma richiesta"
+                            aria-label="Conferma richiesta"
+                          >
+                            <CheckIcon className="w-4 h-4" />
+                          </div>
+                        }
                       />
                     </div>
                   }
@@ -310,7 +337,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
         )}
       </TabsContent>
 
-      {/* 2. TAB: LEZIONI CONFERMATE */}
+      {/* 2. TAB: LEZIONI CONFERMATE (Layout 2: DATA ORA NOME | MAIL - NOTE ALTEZZA VARIABILE - FOOTER: CALENDAR | EDIT | DELETE) */}
       <TabsContent value="confermate" className="w-full space-y-4">
         {data.confirmedLessons.length === 0 ? (
           <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
@@ -331,26 +358,63 @@ export function LessonTabs({ data }: LessonTabsProps) {
                 <LessonCardItem
                   key={lesson.id}
                   lesson={lesson}
-                  badge={
-                    <Badge className="w-fit bg-primary text-white hover:bg-primary text-xs">
-                      ✓ Confermata
-                    </Badge>
+                  topActions={
+                    lesson.guest_email ? (
+                      <a
+                        href={`mailto:${lesson.guest_email}?subject=${encodeURIComponent("Lezione confermata EduBook")}`}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        title={`Invia email a ${lesson.guest_email}`}
+                        aria-label={`Invia email a ${lesson.guest_name || "studente"}`}
+                      >
+                        <MailIcon className="w-4 h-4" />
+                      </a>
+                    ) : null
                   }
                   footer={
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Sinistra: Pulsante Google Calendar Pill */}
                       <a
                         href={getGCalUrl(lesson)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline flex items-center gap-1.5"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-semibold transition-colors"
+                        title="Aggiungi a Google Calendar"
                       >
                         <CalendarPlusIcon className="w-3.5 h-3.5" />
-                        Apri in Google Calendar
+                        <span>Calendar</span>
                       </a>
 
-                      <div className="flex items-center gap-2">
-                        <EditLessonDialog lesson={lesson} />
-                        <CancelLessonDialog lessonId={lesson.id} guestName={lesson.guest_name} />
+                      {/* Centro: Modifica Orario (Icona Matita) */}
+                      <div className="flex items-center justify-center">
+                        <EditLessonDialog
+                          lesson={lesson}
+                          trigger={
+                            <div
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              title="Modifica orario lezione"
+                              aria-label="Modifica orario lezione"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </div>
+                          }
+                        />
+                      </div>
+
+                      {/* Destra: Cestino / Annulla Lezione */}
+                      <div className="flex items-center justify-end">
+                        <CancelLessonDialog
+                          lessonId={lesson.id}
+                          guestName={lesson.guest_name}
+                          trigger={
+                            <div
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-destructive/20 bg-background hover:bg-destructive/10 text-destructive transition-colors"
+                              title="Annulla o elimina lezione"
+                              aria-label="Annulla o elimina lezione"
+                            >
+                              <Trash2Icon className="w-4 h-4" />
+                            </div>
+                          }
+                        />
                       </div>
                     </div>
                   }
@@ -361,7 +425,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
         )}
       </TabsContent>
 
-      {/* 3. TAB: DISPONIBILITÀ (SLOT LIBERI) */}
+      {/* 3. TAB: DISPONIBILITÀ (Layout 3: DATA • ORA • DURATA • VISIBILE - EDIT / TRASH) */}
       <TabsContent value="disponibilita" className="w-full space-y-4">
         <div className="p-4 rounded-xl bg-card border border-border w-full">
           <h3 className="font-bold text-foreground text-sm sm:text-base">Gestione Slot di Disponibilità</h3>
@@ -383,7 +447,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4 w-full">
+          <div className="grid grid-cols-1 gap-3 w-full">
             {data.availableSlots.map((slot) => {
               const start = new Date(slot.start_time);
               const end = new Date(slot.end_time);
@@ -391,55 +455,54 @@ export function LessonTabs({ data }: LessonTabsProps) {
               const isDeleting = loadingActionId === slot.id;
 
               return (
-                <Card key={slot.id} className="w-full border-border shadow-sm overflow-hidden">
-                  <CardContent className="p-5 space-y-4 w-full">
-                    {/* Header con data, orario e badge */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-                      <div className="flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-primary" />
-                        <span className="font-bold text-foreground capitalize text-sm sm:text-base">
-                          {format(start, "EEEE d MMMM yyyy", { locale: it })}
-                        </span>
-                        <span className="text-xs text-muted-foreground font-semibold">
-                          ({format(start, "HH:mm")} - {format(end, "HH:mm")})
+                <Card key={slot.id} className="w-full border-border shadow-sm overflow-hidden bg-card">
+                  <CardContent className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+                    {/* A sinistra: DATA • ORA • DURATA */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm font-semibold text-foreground">
+                      <div className="flex items-center gap-1.5 text-primary">
+                        <CalendarIcon className="w-4 h-4 shrink-0" />
+                        <span className="capitalize">{format(start, "EEE d MMM yyyy", { locale: it })}</span>
+                      </div>
+
+                      <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+
+                      <div className="flex items-center gap-1 text-muted-foreground font-medium">
+                        <ClockIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>
+                          {format(start, "HH:mm")} - {format(end, "HH:mm")}
                         </span>
                       </div>
-                      <Badge className="w-fit bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-xs">
-                        Disponibile per Prenotazione
-                      </Badge>
+
+                      <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+
+                      <div className="text-muted-foreground font-medium">
+                        {durationMin} min
+                      </div>
+
+                      <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+
+                      {/* Stato: • VISIBILE */}
+                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        <span>VISIBILE</span>
+                      </div>
                     </div>
 
-                    {/* Dettagli slot e disponibilità */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2 text-foreground">
-                        <ClockIcon className="w-4 h-4 text-primary shrink-0" />
-                        <span className="font-medium">Durata slot: {durationMin} minuti</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                        <span>Visibile pubblicamente nel calendario prenotazioni</span>
-                      </div>
-                    </div>
-
-                    {/* Azioni / Footer */}
-                    <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-border">
+                    {/* All'estrema destra: Icone EDIT / CESTINO */}
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={() => setSlotToDelete(slot)}
                         disabled={isDeleting}
-                        className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20 h-9 px-3.5"
+                        className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-md"
+                        title="Rimuovi disponibilità"
+                        aria-label="Rimuovi disponibilità"
                       >
                         {isDeleting ? (
-                          <span className="flex items-center gap-1.5">
-                            <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
-                            Eliminazione...
-                          </span>
+                          <Loader2Icon className="w-4 h-4 animate-spin" />
                         ) : (
-                          <span className="flex items-center gap-1.5">
-                            <Trash2Icon className="w-3.5 h-3.5" />
-                            Rimuovi Disponibilità
-                          </span>
+                          <Trash2Icon className="w-4 h-4" />
                         )}
                       </Button>
                     </div>
@@ -451,7 +514,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
         )}
       </TabsContent>
 
-      {/* 4. TAB: MESSAGGI DAL MODULO DI CONTATTO */}
+      {/* 4. TAB: MESSAGGI (Layout 4: MITTENTE • EMAIL | DATA E ORA - MESSAGGIO ALTEZZA VARIABILE - FOOTER: RISPONDI | CESTINO) */}
       <TabsContent value="messaggi" className="w-full space-y-4">
         {data.contactMessages.length === 0 ? (
           <Card className="w-full border-dashed border-border bg-muted/20 text-center py-12">
@@ -471,32 +534,45 @@ export function LessonTabs({ data }: LessonTabsProps) {
               const isDeleting = loadingActionId === msg.id;
 
               return (
-                <Card key={msg.id} className="w-full border-border shadow-sm">
-                  <CardContent className="p-5 space-y-3 w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-                      <div className="flex items-center gap-2">
-                        <UserIcon className="w-4 h-4 text-primary" />
-                        <span className="font-bold text-foreground text-sm">{msg.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          (&lt;<a href={`mailto:${msg.email}`} className="text-primary hover:underline">{msg.email}</a>&gt;)
-                        </span>
+                <Card key={msg.id} className="w-full border-border shadow-sm overflow-hidden bg-card">
+                  <CardContent className="p-4 sm:p-5 space-y-3 w-full">
+                    {/* RIGA SUPERIORE: MITTENTE • EMAIL (a sinistra) | DATA E ORA (a destra) */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/70 pb-3">
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm font-semibold text-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <UserIcon className="w-4 h-4 text-primary shrink-0" />
+                          <span>{msg.name}</span>
+                        </div>
+
+                        <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+
+                        <a
+                          href={`mailto:${msg.email}`}
+                          className="text-xs sm:text-sm font-normal text-muted-foreground hover:text-primary hover:underline"
+                        >
+                          {msg.email}
+                        </a>
                       </div>
-                      <span className="text-[11px] text-muted-foreground">
+
+                      <div className="text-xs text-muted-foreground font-medium self-end sm:self-auto shrink-0">
                         {format(new Date(msg.created_at), "d MMMM yyyy, HH:mm", { locale: it })}
-                      </span>
+                      </div>
                     </div>
 
+                    {/* CORPO MESSAGGIO: ALTEZZA VARIABILE (V) */}
                     <div className="p-3.5 rounded-lg bg-muted/40 border border-border text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                       {msg.message}
                     </div>
 
-                    <div className="flex items-center justify-between pt-1">
+                    {/* RIGA INFERIORE / FOOTER: RISPONDI (a sinistra) | CESTINO (a destra) */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border/70">
                       <a
                         href={`mailto:${msg.email}?subject=${encodeURIComponent("Risposta da EduBook")}`}
-                        className="text-xs font-semibold text-primary hover:underline flex items-center gap-1.5"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline py-1"
+                        title="Rispondi via email"
                       >
                         <MailIcon className="w-3.5 h-3.5" />
-                        Rispondi via email
+                        <span>Rispondi</span>
                       </a>
 
                       <Button
@@ -504,15 +580,14 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         size="sm"
                         onClick={() => setMessageToDelete(msg)}
                         disabled={isDeleting}
-                        className="text-xs text-destructive hover:bg-destructive/10 h-8 px-2"
+                        className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-md"
+                        title="Elimina messaggio"
+                        aria-label="Elimina messaggio"
                       >
                         {isDeleting ? (
-                          <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2Icon className="w-4 h-4 animate-spin" />
                         ) : (
-                          <span className="flex items-center gap-1">
-                            <Trash2Icon className="w-3.5 h-3.5" />
-                            Elimina
-                          </span>
+                          <Trash2Icon className="w-4 h-4" />
                         )}
                       </Button>
                     </div>
