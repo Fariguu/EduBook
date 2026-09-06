@@ -286,15 +286,16 @@ export function LessonTabs({ data }: LessonTabsProps) {
                   key={lesson.id}
                   lesson={lesson}
                   topActions={
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       {lesson.guest_email && (
                         <a
                           href={`mailto:${lesson.guest_email}?subject=${encodeURIComponent("Richiesta di lezione EduBook")}`}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
                           title={`Invia email a ${lesson.guest_email}`}
-                          aria-label={`Invia email a ${lesson.guest_name || "studente"}`}
+                          aria-label={`Rispondi via email a ${lesson.guest_name || "studente"}`}
                         >
-                          <MailIcon className="w-4 h-4" />
+                          <MailIcon className="w-3.5 h-3.5" />
+                          <span>Rispondi</span>
                         </a>
                       )}
 
@@ -304,11 +305,12 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         guestEmail={lesson.guest_email}
                         trigger={
                           <div
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 text-xs font-medium transition-colors cursor-pointer"
                             title="Rifiuta richiesta"
                             aria-label="Rifiuta richiesta"
                           >
-                            <XIcon className="w-4 h-4" />
+                            <XIcon className="w-3.5 h-3.5" />
+                            <span>Rifiuta</span>
                           </div>
                         }
                       />
@@ -321,11 +323,12 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         endTime={lesson.end_time}
                         trigger={
                           <div
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-primary/30 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-primary/30 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium transition-colors shadow-sm cursor-pointer"
                             title="Conferma richiesta"
                             aria-label="Conferma richiesta"
                           >
-                            <CheckIcon className="w-4 h-4" />
+                            <CheckIcon className="w-3.5 h-3.5" />
+                            <span>Conferma</span>
                           </div>
                         }
                       />
@@ -363,11 +366,12 @@ export function LessonTabs({ data }: LessonTabsProps) {
                     lesson.guest_email ? (
                       <a
                         href={`mailto:${lesson.guest_email}?subject=${encodeURIComponent("Lezione confermata EduBook")}`}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
                         title={`Invia email a ${lesson.guest_email}`}
-                        aria-label={`Invia email a ${lesson.guest_name || "studente"}`}
+                        aria-label={`Rispondi via email a ${lesson.guest_name || "studente"}`}
                       >
-                        <MailIcon className="w-4 h-4" />
+                        <MailIcon className="w-3.5 h-3.5" />
+                        <span>Rispondi</span>
                       </a>
                     ) : null
                   }
@@ -385,34 +389,33 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         <span>Calendar</span>
                       </a>
 
-                      {/* Centro: Modifica Orario (Icona Matita) */}
-                      <div className="flex items-center justify-center">
+                      {/* Destra: Modifica Orario & Elimina affiancati */}
+                      <div className="flex items-center gap-2">
                         <EditLessonDialog
                           lesson={lesson}
                           trigger={
                             <div
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors cursor-pointer"
                               title="Modifica orario lezione"
                               aria-label="Modifica orario lezione"
                             >
-                              <PencilIcon className="w-4 h-4" />
+                              <PencilIcon className="w-3.5 h-3.5" />
+                              <span>Modifica</span>
                             </div>
                           }
                         />
-                      </div>
 
-                      {/* Destra: Cestino / Annulla Lezione */}
-                      <div className="flex items-center justify-end">
                         <CancelLessonDialog
                           lessonId={lesson.id}
                           guestName={lesson.guest_name}
                           trigger={
                             <div
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-destructive/20 bg-background hover:bg-destructive/10 text-destructive transition-colors"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-destructive/20 bg-background hover:bg-destructive/10 text-destructive text-xs font-medium transition-colors cursor-pointer"
                               title="Annulla o elimina lezione"
                               aria-label="Annulla o elimina lezione"
                             >
-                              <Trash2Icon className="w-4 h-4" />
+                              <Trash2Icon className="w-3.5 h-3.5" />
+                              <span>Elimina</span>
                             </div>
                           }
                         />
@@ -489,22 +492,23 @@ export function LessonTabs({ data }: LessonTabsProps) {
                       </div>
                     </div>
 
-                    {/* All'estrema destra: Icone EDIT / CESTINO */}
+                    {/* All'estrema destra: Tasto Elimina */}
                     <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSlotToDelete(slot)}
                         disabled={isDeleting}
-                        className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-md"
+                        className="h-8 px-2.5 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-md"
                         title="Rimuovi disponibilità"
                         aria-label="Rimuovi disponibilità"
                       >
                         {isDeleting ? (
-                          <Loader2Icon className="w-4 h-4 animate-spin" />
+                          <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <Trash2Icon className="w-4 h-4" />
+                          <Trash2Icon className="w-3.5 h-3.5" />
                         )}
+                        <span>Elimina</span>
                       </Button>
                     </div>
                   </CardContent>
@@ -581,15 +585,16 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         size="sm"
                         onClick={() => setMessageToDelete(msg)}
                         disabled={isDeleting}
-                        className="w-8 h-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-md"
+                        className="h-8 px-2.5 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20 rounded-md"
                         title="Elimina messaggio"
                         aria-label="Elimina messaggio"
                       >
                         {isDeleting ? (
-                          <Loader2Icon className="w-4 h-4 animate-spin" />
+                          <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <Trash2Icon className="w-4 h-4" />
+                          <Trash2Icon className="w-3.5 h-3.5" />
                         )}
+                        <span>Elimina</span>
                       </Button>
                     </div>
                   </CardContent>
