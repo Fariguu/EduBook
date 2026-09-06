@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -113,7 +113,7 @@ export function CredentialsCard({ initialEmail }: CredentialsCardProps) {
   return (
     <Card className="border-border shadow-sm">
       <CardHeader className="pb-4 border-b border-border">
-        <CardTitle className="text-lg font-bold text-text flex items-center gap-2">
+        <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
           <ShieldCheckIcon className="w-5 h-5 text-primary" />
           Credenziali di Accesso &amp; Sicurezza
         </CardTitle>

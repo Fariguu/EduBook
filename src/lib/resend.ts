@@ -31,7 +31,7 @@ export async function sendEmail({
 
   // Fallback: se Resend non è configurato o siamo in mock
   if (!resend || !resendApiKey) {
-    console.log("📨 [MOCK EMAIL CONSOLE]", {
+    console.info("📨 [MOCK EMAIL CONSOLE]", {
       to,
       from: sender,
       subject,

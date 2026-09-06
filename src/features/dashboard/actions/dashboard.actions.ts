@@ -21,7 +21,7 @@ import {
   lessonTimeUpdatedStudentEmail,
   lessonCancelledStudentEmail,
 } from "@/lib/email-templates";
-import { addWeeks, differenceInWeeks } from "date-fns";
+import { addWeeks, differenceInWeeks, subDays } from "date-fns";
 import {
   fetchLessonById,
   formatLessonDates,
@@ -554,5 +554,72 @@ export async function cancelLessonWithChoice(
   } catch (err) {
     console.error("[cancelLessonWithChoice] Errore inatteso:", err);
     return { success: false, error: "Errore durante l'annullamento della lezione." };
+  }
+}
+
+/**
+ * Esegue la manutenzione manuale della dashboard da parte del docente autenticato:
+ * 1. Elimina gli slot disponibili passati (end_time < now)
+ * 2. Elimina le richieste in attesa scadute (end_time < now)
+ * 3. Elimina lezioni passate più vecchie di 365 giorni
+ */
+export async function runManualCleanup(): Promise<{
+  success: boolean;
+  cancelledExpired: number;
+  deletedSlots: number;
+  error?: string;
+}> {
+  try {
+    await requireAuth();
+    const admin = createAdminClient();
+    const nowIso = new Date().toISOString();
+    const cutoff365 = subDays(new Date(), 365).toISOString();
+
+    // 1. Elimina slot liberi passati
+    const { data: deletedAvailable, error: errAvailable } = await admin
+      .from("lessons")
+      .delete()
+      .eq("status", "available")
+      .lt("end_time", nowIso)
+      .select("id");
+
+    if (errAvailable) throw errAvailable;
+
+    // 2. Elimina richieste in attesa scadute
+    const { data: cancelledPending, error: errPending } = await admin
+      .from("lessons")
+      .delete()
+      .eq("status", "pending")
+      .lt("end_time", nowIso)
+      .select("id");
+
+    if (errPending) throw errPending;
+
+    // 3. Elimina lezioni archiviate vecchie (>365gg)
+    await admin
+      .from("lessons")
+      .delete()
+      .lt("end_time", cutoff365);
+
+    const deletedSlots = deletedAvailable ? deletedAvailable.length : 0;
+    const cancelledExpired = cancelledPending ? cancelledPending.length : 0;
+
+    revalidatePath("/dashboard");
+    revalidatePath("/prenota");
+
+    return {
+      success: true,
+      cancelledExpired,
+      deletedSlots,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Errore durante l'esecuzione del cleanup";
+    console.error("[runManualCleanup] Errore manutenzione:", error);
+    return {
+      success: false,
+      cancelledExpired: 0,
+      deletedSlots: 0,
+      error: message,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+﻿import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheckIcon, MailIcon, ClockIcon, LockIcon, DatabaseIcon, AlertCircleIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -19,7 +19,7 @@ export function PrivacyContent({
           <ShieldCheckIcon className="w-4 h-4" />
           Conformità GDPR (Regolamento UE 2016/679)
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-text tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
           Informativa sulla Privacy
         </h1>
         <p className="text-muted-foreground text-sm">
@@ -28,10 +28,10 @@ export function PrivacyContent({
       </div>
 
       <Card className="border-border shadow-sm">
-        <CardContent className="p-6 sm:p-8 space-y-6 text-sm text-text leading-relaxed">
+        <CardContent className="p-6 sm:p-8 space-y-6 text-sm text-foreground leading-relaxed">
           {/* Sezione 1 */}
           <section className="space-y-2">
-            <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <ShieldCheckIcon className="w-5 h-5 text-primary" />
               1. Titolare del Trattamento dei Dati
             </h2>
@@ -47,7 +47,7 @@ export function PrivacyContent({
 
           {/* Sezione 2 */}
           <section className="space-y-2 border-t border-border pt-5">
-            <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <DatabaseIcon className="w-5 h-5 text-primary" />
               2. Tipologie di Dati Raccolti
             </h2>
@@ -76,7 +76,7 @@ export function PrivacyContent({
 
           {/* Sezione 3 */}
           <section className="space-y-2 border-t border-border pt-5">
-            <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <LockIcon className="w-5 h-5 text-primary" />
               3. Finalità e Base Giuridica del Trattamento
             </h2>
@@ -102,7 +102,7 @@ export function PrivacyContent({
 
           {/* Sezione 4 */}
           <section className="space-y-2 border-t border-border pt-5">
-            <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <ClockIcon className="w-5 h-5 text-primary" />
               4. Conservazione dei Dati e Cancellazione Automatica
             </h2>
@@ -110,7 +110,7 @@ export function PrivacyContent({
               Adottiamo il principio di minimizzazione della conservazione:
             </p>
             <div className="p-3.5 rounded-lg bg-primary/5 border border-primary/20 text-xs sm:text-sm space-y-1">
-              <p className="font-semibold text-text flex items-center gap-1.5">
+              <p className="font-semibold text-foreground flex items-center gap-1.5">
                 <ClockIcon className="w-4 h-4 text-primary" />
                 Politica di conservazione a 365 giorni (Cron Cleanup)
               </p>
@@ -128,7 +128,7 @@ export function PrivacyContent({
 
           {/* Sezione 5 */}
           <section className="space-y-2 border-t border-border pt-5">
-            <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <AlertCircleIcon className="w-5 h-5 text-primary" />
               5. Diritti dell&apos;Interessato (Artt. 15-22 GDPR)
             </h2>
@@ -156,7 +156,7 @@ export function PrivacyContent({
 
           {/* Sezione 6 */}
           <section className="space-y-2 border-t border-border pt-5">
-            <h2 className="text-base sm:text-lg font-bold text-text flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
               <MailIcon className="w-5 h-5 text-primary" />
               6. Come Esercitare i Propri Diritti
             </h2>

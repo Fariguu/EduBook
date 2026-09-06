@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+﻿import { Metadata } from "next";
 import { getProfile } from "@/features/profile/actions/profile.actions";
 import { ProfileForm } from "@/features/profile/components/ProfileForm";
 import { CredentialsCard } from "@/features/profile/components/CredentialsCard";
@@ -27,7 +27,7 @@ export default async function ProfiloPage() {
             <ArrowLeftIcon className="w-3.5 h-3.5" />
             Torna alla Dashboard
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-black text-text tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
             Gestione Profilo Docente
           </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">

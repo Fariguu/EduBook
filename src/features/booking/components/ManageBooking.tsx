@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { format } from "date-fns";
@@ -63,7 +63,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Riepilogo Prenotazione
               </span>
-              <CardTitle className="text-xl font-bold text-text capitalize mt-0.5">
+              <CardTitle className="text-xl font-bold text-foreground capitalize mt-0.5">
                 {formattedDate}
               </CardTitle>
             </div>
@@ -74,7 +74,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
                   ✓ Confermata dal Docente
                 </Badge>
               ) : currentLesson.status === "pending" ? (
-                <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 px-3 py-1 text-xs">
+                <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-500/20 px-3 py-1 text-xs">
                   ⏳ In Attesa di Conferma
                 </Badge>
               ) : (
@@ -83,7 +83,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
             </div>
           </div>
           <CardDescription className="text-xs text-muted-foreground mt-1">
-            Codice lezione: <code className="text-text font-mono">{currentLesson.id}</code>
+            Codice lezione: <code className="text-foreground font-mono">{currentLesson.id}</code>
           </CardDescription>
         </CardHeader>
 
@@ -94,7 +94,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                 Orario Lezione
               </span>
-              <div className="flex items-center gap-2 text-text font-semibold text-base">
+              <div className="flex items-center gap-2 text-foreground font-semibold text-base">
                 <ClockIcon className="w-4 h-4 text-primary" />
                 <span>
                   {formattedStartTime} - {formattedEndTime}
@@ -110,7 +110,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                 Dati Studente
               </span>
-              <div className="flex items-center gap-2 text-text text-sm">
+              <div className="flex items-center gap-2 text-foreground text-sm">
                 <UserIcon className="w-4 h-4 text-primary" />
                 <span>{currentLesson.guest_name || "Studente"}</span>
               </div>
@@ -127,7 +127,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
               <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                 <FileTextIcon className="w-3.5 h-3.5" /> Note inserite al momento della richiesta:
               </span>
-              <p className="text-text text-xs sm:text-sm italic">{currentLesson.notes}</p>
+              <p className="text-foreground text-xs sm:text-sm italic">{currentLesson.notes}</p>
             </div>
           )}
 
@@ -135,7 +135,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
           {currentLesson.status === "confirmed" && (
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-sm">
-                <p className="font-semibold text-text">La lezione è confermata!</p>
+                <p className="font-semibold text-foreground">La lezione è confermata!</p>
                 <p className="text-xs text-muted-foreground">
                   Aggiungila al tuo calendario per ricevere un promemoria prima dell&apos;inizio.
                 </p>
@@ -157,18 +157,18 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
           {/* SEZIONE SPOSTAMENTO LEZIONE */}
           <div className="pt-2 border-t border-border">
             {currentLesson.reschedule_requested ? (
-              <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-600/80 text-amber-950 dark:text-amber-100 space-y-1.5 shadow-sm">
-                <div className="flex items-center gap-2 font-bold text-sm text-amber-900 dark:text-amber-200">
-                  <AlertCircleIcon className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <div className="p-4 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 space-y-1.5 shadow-sm">
+                <div className="flex items-center gap-2 font-bold text-sm text-amber-900">
+                  <AlertCircleIcon className="w-4 h-4 shrink-0 text-amber-600" />
                   Richiesta di Spostamento Inoltrata
                 </div>
-                <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+                <p className="text-xs leading-relaxed text-amber-900">
                   Hai richiesto di spostare questa lezione. Il professore ha ricevuto la tua notifica
                   e ti ricontatterà all&apos;indirizzo <strong className="underline decoration-amber-400">{currentLesson.guest_email}</strong> per
                   concordare un nuovo appuntamento.
                 </p>
                 {currentLesson.reschedule_notes && (
-                  <p className="text-xs italic pt-1.5 border-t border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
+                  <p className="text-xs italic pt-1.5 border-t border-amber-200 text-amber-900">
                     &ldquo;{currentLesson.reschedule_notes}&rdquo;
                   </p>
                 )}
@@ -190,7 +190,7 @@ export function ManageBooking({ lesson, professorName = "il Professore" }: Manag
             ) : (
               <div className="p-4 rounded-lg bg-muted/40 border border-border">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-text">Richiesta Cambio Orario</span>
+                  <span className="text-sm font-bold text-foreground">Richiesta Cambio Orario</span>
                 </div>
                 <RescheduleForm
                   lessonId={currentLesson.id}

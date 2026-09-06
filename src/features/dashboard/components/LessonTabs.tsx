@@ -30,7 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { DashboardData, DashboardLesson, ContactMessage } from "../types/dashboard.types";
-import { removeAvailableSlot } from "../actions/dashboard.actions";
+import { removeAvailableSlot, runManualCleanup } from "../actions/dashboard.actions";
 import { deleteContactMessage } from "@/features/contact/actions/contact.actions";
 import { CreateSlotDialog } from "./CreateSlotDialog";
 import { EditLessonDialog } from "./EditLessonDialog";
@@ -56,8 +56,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
     setIsRunningCleanup(true);
     setCleanupConfirmOpen(false);
     try {
-      const res = await fetch("/api/cron/cleanup");
-      const result = await res.json();
+      const result = await runManualCleanup();
       if (result.success) {
         toast.success(
           `Cleanup completato con successo: ${result.cancelledExpired ?? 0} lezioni scadute annullate, ${result.deletedSlots ?? 0} slot passati rimossi.`
@@ -256,7 +255,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <InboxIcon className="w-6 h-6" />
               </div>
-              <h3 className="font-semibold text-text text-base">Nessuna richiesta in attesa</h3>
+              <h3 className="font-semibold text-foreground text-base">Nessuna richiesta in attesa</h3>
               <p className="text-muted-foreground text-xs max-w-sm mx-auto">
                 Quando uno studente prenota uno slot libero dal sito pubblico, la richiesta apparirà qui per
                 la tua approvazione.
@@ -271,7 +270,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                   key={lesson.id}
                   lesson={lesson}
                   badge={
-                    <Badge className="w-fit bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 text-xs">
+                    <Badge className="w-fit bg-amber-500/10 text-amber-700 border-amber-500/20 text-xs">
                       In Attesa di Conferma
                     </Badge>
                   }
@@ -307,7 +306,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <CheckCircle2Icon className="w-6 h-6" />
               </div>
-              <h3 className="font-semibold text-text text-base">Nessuna lezione confermata</h3>
+              <h3 className="font-semibold text-foreground text-base">Nessuna lezione confermata</h3>
               <p className="text-muted-foreground text-xs max-w-sm mx-auto">
                 Le lezioni che confermi appariranno in questo elenco con gli appuntamenti in programma.
               </p>
@@ -353,7 +352,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
       {/* 3. TAB: DISPONIBILITÀ (SLOT LIBERI) */}
       <TabsContent value="disponibilita" className="w-full space-y-4">
         <div className="p-4 rounded-xl bg-card border border-border w-full">
-          <h3 className="font-bold text-text text-sm sm:text-base">Gestione Slot di Disponibilità</h3>
+          <h3 className="font-bold text-foreground text-sm sm:text-base">Gestione Slot di Disponibilità</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Gli slot liberi impostati qui sotto sono visibili pubblicamente agli studenti sul calendario.
           </p>
@@ -365,7 +364,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <CalendarIcon className="w-6 h-6" />
               </div>
-              <h3 className="font-semibold text-text text-base">Nessuno slot libero programmato</h3>
+              <h3 className="font-semibold text-foreground text-base">Nessuno slot libero programmato</h3>
               <p className="text-muted-foreground text-xs max-w-sm mx-auto">
                 Usa il pulsante &ldquo;Aggiungi Disponibilità&rdquo; nel pannello laterale per creare le fasce orarie in cui sei libero per lezioni private.
               </p>
@@ -393,7 +392,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                           ({format(start, "HH:mm")} - {format(end, "HH:mm")})
                         </span>
                       </div>
-                      <Badge className="w-fit bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-xs">
+                      <Badge className="w-fit bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-xs">
                         Disponibile per Prenotazione
                       </Badge>
                     </div>
@@ -448,7 +447,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
                 <MessageSquareIcon className="w-6 h-6" />
               </div>
-              <h3 className="font-semibold text-text text-base">Nessun messaggio ricevuto</h3>
+              <h3 className="font-semibold text-foreground text-base">Nessun messaggio ricevuto</h3>
               <p className="text-muted-foreground text-xs max-w-sm mx-auto">
                 I messaggi inviati tramite la pagina pubblica di contatto appariranno qui.
               </p>
@@ -465,7 +464,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                       <div className="flex items-center gap-2">
                         <UserIcon className="w-4 h-4 text-primary" />
-                        <span className="font-bold text-text text-sm">{msg.name}</span>
+                        <span className="font-bold text-foreground text-sm">{msg.name}</span>
                         <span className="text-xs text-muted-foreground">
                           (&lt;<a href={`mailto:${msg.email}`} className="text-primary hover:underline">{msg.email}</a>&gt;)
                         </span>
@@ -475,7 +474,7 @@ export function LessonTabs({ data }: LessonTabsProps) {
                       </span>
                     </div>
 
-                    <div className="p-3.5 rounded-lg bg-muted/40 border border-border text-xs sm:text-sm text-text whitespace-pre-wrap leading-relaxed">
+                    <div className="p-3.5 rounded-lg bg-muted/40 border border-border text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                       {msg.message}
                     </div>
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -100,7 +100,7 @@ export function CreateSlotDialog() {
         <DialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-text font-bold text-lg">
+            <DialogTitle className="flex items-center gap-2 text-foreground font-bold text-lg">
               <CalendarIcon className="w-5 h-5 text-primary" />
               Nuovo Slot di Disponibilità
             </DialogTitle>

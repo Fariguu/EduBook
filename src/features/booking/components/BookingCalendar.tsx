@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { format, isBefore, startOfToday } from "date-fns";
@@ -188,7 +188,7 @@ export function BookingCalendar({
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-3">
                 <CheckCircle2Icon className="w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold text-text">Richiesta di Prenotazione Inviata!</h2>
+              <h2 className="text-2xl font-bold text-foreground">Richiesta di Prenotazione Inviata!</h2>
               <p className="text-muted-foreground mt-1 text-sm max-w-md">
                 Abbiamo inviato un&apos;email di conferma a <strong>{successData.guestEmail}</strong>.
               </p>
@@ -198,7 +198,7 @@ export function BookingCalendar({
               <div className="bg-muted/40 p-4 rounded-lg space-y-2 text-sm border border-border">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-primary" />
-                  <span className="font-medium text-text capitalize">{successData.date}</span>
+                  <span className="font-medium text-foreground capitalize">{successData.date}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ClockIcon className="w-4 h-4 text-primary" />
@@ -215,7 +215,7 @@ export function BookingCalendar({
               </div>
 
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm">
-                <p className="font-medium text-text flex items-center gap-2 mb-1">
+                <p className="font-medium text-foreground flex items-center gap-2 mb-1">
                   <SparklesIcon className="w-4 h-4 text-primary" />
                   Cosa succede ora?
                 </p>
@@ -254,7 +254,7 @@ export function BookingCalendar({
         <div className="lg:col-span-6">
           <Card className="border-border shadow-md overflow-hidden">
             <CardHeader className="pb-4 border-b border-border/60 bg-muted/20">
-              <CardTitle className="text-xl font-bold flex items-center gap-2.5 text-text">
+              <CardTitle className="text-xl font-bold flex items-center gap-2.5 text-foreground">
                 <CalendarIcon className="w-5 h-5 text-primary" />
                 Seleziona una data
               </CardTitle>
@@ -296,7 +296,7 @@ export function BookingCalendar({
                   <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
                     <CalendarIcon className="w-6 h-6" />
                   </div>
-                  <h3 className="font-semibold text-text text-base">Nessuna data selezionata</h3>
+                  <h3 className="font-semibold text-foreground text-base">Nessuna data selezionata</h3>
                   <p className="text-muted-foreground text-sm mt-1 max-w-sm mx-auto">
                     Clicca su un giorno nel calendario a sinistra per visualizzare le fasce orarie
                     disponibili.
@@ -311,7 +311,7 @@ export function BookingCalendar({
                 exit={{ opacity: 0 }}
               >
                 <Card className="border-border text-center p-8">
-                  <h3 className="font-semibold text-text text-base">Nessuna disponibilità</h3>
+                  <h3 className="font-semibold text-foreground text-base">Nessuna disponibilità</h3>
                   <p className="text-muted-foreground text-sm mt-1">
                     Non ci sono slot disponibili per{" "}
                     <strong>{format(selectedDate, "d MMMM yyyy", { locale: it })}</strong>. Scegli
@@ -331,7 +331,7 @@ export function BookingCalendar({
                 <Card className="border-border shadow-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-bold text-text capitalize">
+                      <CardTitle className="text-lg font-bold text-foreground capitalize">
                         {format(selectedDate, "EEEE d MMMM yyyy", { locale: it })}
                       </CardTitle>
                       <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
@@ -356,8 +356,8 @@ export function BookingCalendar({
                             onClick={() => handleSelectSlot(slot)}
                             className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
                               isSelected
-                                ? "border-primary bg-primary/10 text-text ring-1 ring-primary"
-                                : "border-border hover:border-primary/40 bg-card text-text"
+                                ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
+                                : "border-border hover:border-primary/40 bg-card text-foreground"
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -395,7 +395,7 @@ export function BookingCalendar({
                                 className={`px-3 py-2 rounded-md border text-xs font-medium text-left transition-all ${
                                   isOptSelected
                                     ? "bg-primary text-white border-primary shadow-sm"
-                                    : "bg-muted/40 hover:bg-muted border-border text-text"
+                                    : "bg-muted/40 hover:bg-muted border-border text-foreground"
                                 }`}
                               >
                                 {opt.label}
@@ -417,7 +417,7 @@ export function BookingCalendar({
                   >
                     <Card className="border-border shadow-sm">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-bold text-text flex items-center gap-2">
+                        <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                           <UserIcon className="w-4 h-4 text-primary" />
                           Dati per la prenotazione
                         </CardTitle>

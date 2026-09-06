@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -96,7 +96,7 @@ export function ContactForm() {
   return (
     <Card className="border-border shadow-sm">
       <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold text-text flex items-center gap-2">
+        <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
           <MessageSquareIcon className="w-5 h-5 text-primary" />
           Invia un messaggio
         </CardTitle>
@@ -119,7 +119,7 @@ export function ContactForm() {
                 <CheckCircle2Icon className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text">Messaggio Ricevuto!</h3>
+                <h3 className="text-lg font-bold text-foreground">Messaggio Ricevuto!</h3>
                 <p className="text-muted-foreground text-sm mt-1 max-w-md mx-auto">
                   Grazie <strong>{name}</strong>, il tuo messaggio è stato recapitato al docente.
                   Riceverai una risposta al più presto all&apos;indirizzo <strong>{email}</strong>.

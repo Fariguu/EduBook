@@ -6,6 +6,8 @@ import { CTASection } from "@/features/landing/components/CTASection";
 import { Footer } from "@/features/landing/components/Footer";
 import { getPublicProfessorProfile } from "@/features/landing/utils/get-public-profile";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const { professorName, headline, bio, subjects, subjectDetails, isAuthenticated } = await getPublicProfessorProfile();
 
