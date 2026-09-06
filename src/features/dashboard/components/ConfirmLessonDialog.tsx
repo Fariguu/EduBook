@@ -66,20 +66,13 @@ export function ConfirmLessonDialog({
   return (
     <>
       {trigger ? (
-        <span
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={() => setOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen(true);
-            }
-          }}
-          className="inline-block cursor-pointer"
+          className="inline-block cursor-pointer bg-transparent border-none p-0 text-left font-normal"
         >
           {trigger}
-        </span>
+        </button>
       ) : (
         <Button
           type="button"

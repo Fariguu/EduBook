@@ -11,8 +11,11 @@ TRUNCATE TABLE public.contacts CASCADE;
 -- 2. Garantire/aggiornare il profilo admin di test per gabri@example.com
 DO $$
 DECLARE
-  v_admin_email TEXT := 'gabri@example.com';
+  v_admin_email CONSTANT TEXT := 'gabri@example.com';
   v_provider_email CONSTANT TEXT := 'email';
+  v_first_name CONSTANT TEXT := 'Gabriele';
+  v_last_name CONSTANT TEXT := 'Farigu';
+  v_role_admin CONSTANT TEXT := 'admin';
   v_user_id UUID;
 BEGIN
   -- Trova l'id utente in auth.users
@@ -24,7 +27,7 @@ BEGIN
     SET encrypted_password = extensions.crypt('PredefinedPassword123!', extensions.gen_salt('bf', 10)),
         email_confirmed_at = COALESCE(email_confirmed_at, now()),
         raw_app_meta_data = jsonb_build_object('provider', v_provider_email, 'providers', jsonb_build_array(v_provider_email)),
-        raw_user_meta_data = jsonb_build_object('first_name', 'Gabriele', 'last_name', 'Farigu'),
+        raw_user_meta_data = jsonb_build_object('first_name', v_first_name, 'last_name', v_last_name),
         confirmation_token = COALESCE(confirmation_token, ''),
         recovery_token = COALESCE(recovery_token, ''),
         email_change_token_new = COALESCE(email_change_token_new, ''),
@@ -63,15 +66,15 @@ BEGIN
     ) VALUES (
       v_user_id,
       v_admin_email,
-      'Gabriele',
-      'Farigu',
-      'admin'::user_role,
+      v_first_name,
+      v_last_name,
+      v_role_admin::user_role,
       'Docente di Matematica e Fisica con pluriennale esperienza nell''insegnamento superiore.',
       ARRAY['Matematica', 'Fisica', 'Analisi 1'],
       now()
     )
     ON CONFLICT (id) DO UPDATE SET
-      role = 'admin'::user_role,
+      role = v_role_admin::user_role,
       first_name = EXCLUDED.first_name,
       last_name = EXCLUDED.last_name,
       bio = EXCLUDED.bio,
