@@ -106,6 +106,11 @@ RETURNS JSONB AS $$
 DECLARE
   v_base_date DATE := CURRENT_DATE;
 BEGIN
+  -- 0. Pulizia automatica di sessioni demo inattive da oltre 24 ore
+  DELETE FROM public.lessons_demo WHERE updated_at < now() - interval '24 hours';
+  DELETE FROM public.contacts_demo WHERE created_at < now() - interval '24 hours';
+  DELETE FROM public.profiles_demo WHERE updated_at < now() - interval '24 hours';
+
   -- 1. Pulizia eventuali dati pregressi per questa sessione
   DELETE FROM public.lessons_demo WHERE session_id = p_session_id;
   DELETE FROM public.contacts_demo WHERE session_id = p_session_id;

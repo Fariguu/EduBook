@@ -1,4 +1,4 @@
-﻿import { cookies } from "next/headers";
+import { cookies } from "next/headers";
 import { createAdminClient } from "@/utils/supabase/server";
 
 export const DEMO_SESSION_COOKIE = "edubook_demo_session";
@@ -20,7 +20,6 @@ export async function getDemoSessionId(): Promise<string> {
         path: "/",
         sameSite: "lax",
         httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7, // 7 giorni
       });
     } catch {
       // In Server Components di sola lettura i cookie non possono essere modificati direttamente
@@ -35,6 +34,15 @@ export async function getDemoSessionId(): Promise<string> {
   }
 
   return sessionId;
+}
+
+/**
+ * Elimina i cookie di sessione e autenticazione demo.
+ */
+export async function clearDemoCookies(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(DEMO_SESSION_COOKIE);
+  cookieStore.delete(DEMO_AUTH_COOKIE);
 }
 
 /**
