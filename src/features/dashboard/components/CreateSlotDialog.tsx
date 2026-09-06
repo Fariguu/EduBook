@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ export function CreateSlotDialog() {
     format(addDays(tomorrow, 28), "yyyy-MM-dd")
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     if (!date || !startTime || !endTime) {

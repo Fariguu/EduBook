@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -16,17 +16,17 @@ import { AlertCircleIcon, Loader2Icon, Trash2Icon } from "lucide-react";
 import { cancelLessonWithChoice } from "../actions/dashboard.actions";
 
 interface CancelLessonDialogProps {
-  lessonId: string;
-  guestName?: string | null;
-  trigger?: React.ReactNode;
+  readonly lessonId: string;
+  readonly guestName?: string | null;
+  readonly trigger?: React.ReactNode;
 }
 
-export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLessonDialogProps) {
+export function CancelLessonDialog({ lessonId, guestName, trigger }: Readonly<CancelLessonDialogProps>) {
   const [open, setOpen] = React.useState(false);
   const [keepAvailable, setKeepAvailable] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -58,14 +58,26 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
 
   return (
     <>
-      <span onClick={() => setOpen(true)} className="inline-block cursor-pointer">
-        {trigger || (
-          <Button type="button" variant="outline" size="sm" className="text-xs text-destructive hover:bg-destructive/10">
-            <Trash2Icon className="w-3.5 h-3.5 mr-1" />
-            Annulla Lezione
-          </Button>
-        )}
-      </span>
+      {trigger ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-block cursor-pointer bg-transparent border-none p-0 text-left font-normal"
+        >
+          {trigger}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className="text-xs text-destructive hover:bg-destructive/10"
+        >
+          <Trash2Icon className="w-3.5 h-3.5 mr-1" />
+          Annulla Lezione
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -88,6 +100,8 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
 
             <div className="space-y-2">
               <label
+                htmlFor="keepChoice-true"
+                aria-label="Mantieni lo slot come disponibile"
                 className={`flex items-start gap-3 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
                   keepAvailable
                     ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary"
@@ -95,8 +109,10 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
                 }`}
               >
                 <input
+                  id="keepChoice-true"
                   type="radio"
                   name="keepChoice"
+                  aria-label="Mantieni lo slot come disponibile"
                   checked={keepAvailable}
                   onChange={() => setKeepAvailable(true)}
                   className="mt-0.5"
@@ -110,6 +126,8 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
               </label>
 
               <label
+                htmlFor="keepChoice-false"
+                aria-label="Elimina definitivamente lo slot"
                 className={`flex items-start gap-3 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
                   !keepAvailable
                     ? "border-destructive bg-destructive/10 text-foreground ring-1 ring-destructive"
@@ -117,8 +135,10 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
                 }`}
               >
                 <input
+                  id="keepChoice-false"
                   type="radio"
                   name="keepChoice"
+                  aria-label="Elimina definitivamente lo slot"
                   checked={!keepAvailable}
                   onChange={() => setKeepAvailable(false)}
                   className="mt-0.5"
@@ -150,7 +170,7 @@ export function CancelLessonDialog({ lessonId, guestName, trigger }: CancelLesso
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <Loader2Icon className="w-4 h-4 animate-spin" />
-                  Operazione in corso...
+                  <span>Operazione in corso...</span>
                 </span>
               ) : (
                 "Conferma Annullamento"

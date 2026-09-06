@@ -41,7 +41,7 @@ export function DialogActionFooter({
         {isSubmitting ? (
           <span className="flex items-center gap-2">
             <Loader2Icon className="w-4 h-4 animate-spin" />
-            {submittingLabel}
+            <span>{submittingLabel}</span>
           </span>
         ) : (
           submitLabel

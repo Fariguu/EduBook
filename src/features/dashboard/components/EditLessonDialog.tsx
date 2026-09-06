@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { toast } from "sonner";
@@ -19,11 +19,11 @@ import { updateLessonTime } from "../actions/dashboard.actions";
 import { DialogActionFooter } from "./DialogActionFooter";
 
 interface EditLessonDialogProps {
-  lesson: DashboardLesson;
-  trigger?: React.ReactNode;
+  readonly lesson: DashboardLesson;
+  readonly trigger?: React.ReactNode;
 }
 
-export function EditLessonDialog({ lesson, trigger }: EditLessonDialogProps) {
+export function EditLessonDialog({ lesson, trigger }: Readonly<EditLessonDialogProps>) {
   const [open, setOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -34,7 +34,7 @@ export function EditLessonDialog({ lesson, trigger }: EditLessonDialogProps) {
   const [startTime, setStartTime] = React.useState(format(startObj, "HH:mm"));
   const [endTime, setEndTime] = React.useState(format(endObj, "HH:mm"));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     const newStart = new Date(`${date}T${startTime}`);
@@ -72,14 +72,26 @@ export function EditLessonDialog({ lesson, trigger }: EditLessonDialogProps) {
 
   return (
     <>
-      <span onClick={() => setOpen(true)} className="inline-block cursor-pointer">
-        {trigger || (
-          <Button type="button" variant="outline" size="sm" className="text-xs">
-            <PencilIcon className="w-3.5 h-3.5 mr-1" />
-            Modifica Orario
-          </Button>
-        )}
-      </span>
+      {trigger ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-block cursor-pointer bg-transparent border-none p-0 text-left font-normal"
+        >
+          {trigger}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className="text-xs"
+        >
+          <PencilIcon className="w-3.5 h-3.5 mr-1" />
+          Modifica Orario
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
