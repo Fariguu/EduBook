@@ -1,16 +1,23 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, LogIn, Calendar, Mail, Home } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { GraduationCap, LogIn, Calendar, Mail, Home, Menu, X } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 interface PublicNavbarProps {
-  isAuthenticated?: boolean;
+  readonly isAuthenticated?: boolean;
 }
 
 export function PublicNavbar({ isAuthenticated = false }: PublicNavbarProps) {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  // Chiudi il menu mobile ad ogni cambio pagina
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
@@ -54,24 +61,83 @@ export function PublicNavbar({ isAuthenticated = false }: PublicNavbarProps) {
           })}
         </nav>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
+        {/* Desktop Actions */}
+        <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
-            <Link href="/dashboard">
-              <Button size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                Dashboard
-              </Button>
+            <Link href="/dashboard" className={buttonVariants({ size: "sm", className: "gap-2 bg-primary text-primary-foreground hover:bg-primary/90" })}>
+              Dashboard
             </Link>
           ) : (
-            <Link href="/?auth=login">
-              <Button variant="outline" size="sm" className="gap-2 border-primary/30 hover:border-primary text-foreground hover:text-primary">
-                <LogIn className="h-4 w-4 text-primary" />
-                <span>Accedi</span>
-              </Button>
+            <Link href="/?auth=login" className={buttonVariants({ variant: "outline", size: "sm", className: "gap-2 border-primary/30 hover:border-primary text-foreground hover:text-primary" })}>
+              <LogIn className="h-4 w-4 text-primary" />
+              <span>Accedi</span>
             </Link>
           )}
         </div>
+
+        {/* Mobile Hamburger Toggle Button */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-9 h-9 p-0 text-foreground hover:bg-muted"
+            aria-label={isOpen ? "Chiudi menu di navigazione" : "Apri menu di navigazione"}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+        </div>
       </div>
+
+      {/* Mobile Drawer / Dropdown Navigation */}
+      {isOpen && (
+        <div className="md:hidden border-b border-border/60 bg-background/95 backdrop-blur-md px-4 pt-2 pb-6 space-y-3 shadow-lg animate-in slide-in-from-top-2 duration-200">
+          <nav className="flex flex-col space-y-1">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                    isActive
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="pt-2 border-t border-border/40 flex flex-col gap-2">
+            {isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                onClick={() => setIsOpen(false)}
+                className={buttonVariants({ size: "sm", className: "w-full justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90" })}
+              >
+                Vai alla Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/?auth=login"
+                onClick={() => setIsOpen(false)}
+                className={buttonVariants({ variant: "outline", size: "sm", className: "w-full justify-center gap-2 border-primary/30 hover:border-primary text-foreground hover:text-primary" })}
+              >
+                <LogIn className="h-4 w-4 text-primary" />
+                <span>Accedi come Docente</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

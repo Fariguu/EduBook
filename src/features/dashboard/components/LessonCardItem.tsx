@@ -3,80 +3,88 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   CalendarIcon,
+  ClockIcon,
   UserIcon,
-  MailIcon,
   FileTextIcon,
   AlertTriangleIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardLesson } from "../types/dashboard.types";
+import { ExpandableText } from "./ExpandableText";
 
 interface LessonCardItemProps {
   readonly lesson: DashboardLesson;
-  readonly badge: React.ReactNode;
-  readonly footer: React.ReactNode;
+  readonly topActions: React.ReactNode;
+  readonly footer?: React.ReactNode;
 }
 
-export function LessonCardItem({ lesson, badge, footer }: LessonCardItemProps) {
+export function LessonCardItem({ lesson, topActions, footer }: LessonCardItemProps) {
   const start = new Date(lesson.start_time);
   const end = new Date(lesson.end_time);
 
   return (
-    <Card className="w-full border-border shadow-sm overflow-hidden">
-      <CardContent className="w-full p-5 space-y-4">
-        {/* Header con data, ora e badge */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-primary" />
-            <span className="font-bold text-foreground capitalize text-sm sm:text-base">
-              {format(start, "EEEE d MMMM yyyy", { locale: it })}
-            </span>
-            <span className="text-xs text-muted-foreground font-semibold">
-              ({format(start, "HH:mm")} - {format(end, "HH:mm")})
-            </span>
+    <Card className="w-full border-border shadow-sm overflow-hidden bg-card">
+      <CardContent className="w-full p-4 sm:p-5 space-y-3">
+        {/* RIGA SUPERIORE: DATA - ORA - NOME (a sinistra) | AZIONI (a destra) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-foreground">
+            <div className="flex items-center gap-1.5 text-primary">
+              <CalendarIcon className="w-4 h-4 shrink-0" />
+              <span className="capitalize">{format(start, "EEE d MMM yyyy", { locale: it })}</span>
+            </div>
+
+            <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+
+            <div className="flex items-center gap-1 text-muted-foreground text-xs sm:text-sm font-medium">
+              <ClockIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+              <span>
+                {format(start, "HH:mm")} - {format(end, "HH:mm")}
+              </span>
+            </div>
+
+            <span className="text-muted-foreground/50 hidden sm:inline">•</span>
+
+            <div className="flex items-center gap-1.5 font-bold text-foreground">
+              <UserIcon className="w-4 h-4 shrink-0 text-foreground/80" />
+              <span className="truncate max-w-[200px]">{lesson.guest_name || "Ospite"}</span>
+            </div>
           </div>
-          {badge}
+
+          {/* Icone / Azioni allineate a destra */}
+          <div className="flex items-center gap-1 sm:gap-1.5 self-end sm:self-auto shrink-0">
+            {topActions}
+          </div>
         </div>
 
-        {/* Allerta spostamento se richiesto */}
+        {/* Notifica di richiesta spostamento (se presente) */}
         {lesson.reschedule_requested && (
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1 shadow-sm">
-            <div className="flex items-center gap-1.5 font-bold text-amber-900">
-              <AlertTriangleIcon className="w-4 h-4 text-amber-600 shrink-0" />
-              Lo studente ha richiesto di spostare questa lezione
+          <div className="p-2.5 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-0.5">
+            <div className="flex items-center gap-1.5 font-semibold text-amber-800">
+              <AlertTriangleIcon className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+              <span>Richiesta di spostamento orario da parte dello studente:</span>
             </div>
             {lesson.reschedule_notes && (
-              <p className="italic pl-5 text-amber-900">&ldquo;{lesson.reschedule_notes}&rdquo;</p>
+              <p className="italic pl-5 text-amber-950">&ldquo;{lesson.reschedule_notes}&rdquo;</p>
             )}
           </div>
         )}
 
-        {/* Dati studente */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="flex items-center gap-2 text-foreground">
-            <UserIcon className="w-4 h-4 text-primary shrink-0" />
-            <span className="font-medium">{lesson.guest_name || "Ospite"}</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MailIcon className="w-4 h-4 text-primary shrink-0" />
-            <a href={`mailto:${lesson.guest_email}`} className="hover:underline">
-              {lesson.guest_email || "Nessuna email"}
-            </a>
-          </div>
-        </div>
-
-        {/* Note inserite dallo studente */}
+        {/* CORPO NOTE: ALTEZZA VARIABILE (V) con 'continua a leggere' se supera 3 righe */}
         {lesson.notes && (
           <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-foreground space-y-1">
-            <span className="text-muted-foreground font-semibold flex items-center gap-1">
-              <FileTextIcon className="w-3.5 h-3.5" /> Note studente:
-            </span>
-            <p className="italic pl-4">{lesson.notes}</p>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-1.5">
+              <FileTextIcon className="w-3 h-3 text-muted-foreground" />
+              <span>Note Studente</span>
+            </div>
+            <ExpandableText
+              text={lesson.notes}
+              className="text-foreground/90 leading-relaxed text-xs"
+            />
           </div>
         )}
 
-        {/* Azioni / Footer */}
-        {footer}
+        {/* RIGA INFERIORE / FOOTER (es. per Layout Confermate: Calendar a sx, Edit al centro, Delete a dx) */}
+        {footer && <div className="pt-2 border-t border-border/70">{footer}</div>}
       </CardContent>
     </Card>
   );
