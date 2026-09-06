@@ -299,6 +299,20 @@ export function LessonTabs({ data }: LessonTabsProps) {
                         </a>
                       )}
 
+                      <EditLessonDialog
+                        lesson={lesson}
+                        trigger={
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors cursor-pointer"
+                            title="Modifica orario lezione"
+                            aria-label="Modifica orario lezione"
+                          >
+                            <PencilIcon className="w-3.5 h-3.5" />
+                            <span>Modifica</span>
+                          </div>
+                        }
+                      />
+
                       <RejectLessonDialog
                         lessonId={lesson.id}
                         guestName={lesson.guest_name}
