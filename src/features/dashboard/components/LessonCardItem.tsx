@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardLesson } from "../types/dashboard.types";
+import { ExpandableText } from "./ExpandableText";
 
 interface LessonCardItemProps {
   readonly lesson: DashboardLesson;
@@ -68,16 +69,17 @@ export function LessonCardItem({ lesson, topActions, footer }: LessonCardItemPro
           </div>
         )}
 
-        {/* CORPO NOTE: ALTEZZA VARIABILE (V) in base al contenuto */}
+        {/* CORPO NOTE: ALTEZZA VARIABILE (V) con 'continua a leggere' se supera 3 righe */}
         {lesson.notes && (
           <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs text-foreground space-y-1">
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-1.5">
               <FileTextIcon className="w-3 h-3 text-muted-foreground" />
               <span>Note Studente</span>
             </div>
-            <p className="text-foreground/90 whitespace-pre-wrap leading-relaxed">
-              {lesson.notes}
-            </p>
+            <ExpandableText
+              text={lesson.notes}
+              className="text-foreground/90 leading-relaxed text-xs"
+            />
           </div>
         )}
 

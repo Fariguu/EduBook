@@ -37,6 +37,7 @@ import type { DashboardData, DashboardLesson, ContactMessage } from "../types/da
 import { removeAvailableSlot, runManualCleanup } from "../actions/dashboard.actions";
 import { deleteContactMessage } from "@/features/contact/actions/contact.actions";
 import { LessonCardItem } from "./LessonCardItem";
+import { ExpandableText } from "./ExpandableText";
 
 const CreateSlotDialog = dynamic(
   () => import("./CreateSlotDialog").then((mod) => mod.CreateSlotDialog)
@@ -559,9 +560,9 @@ export function LessonTabs({ data }: LessonTabsProps) {
                       </div>
                     </div>
 
-                    {/* CORPO MESSAGGIO: ALTEZZA VARIABILE (V) */}
-                    <div className="p-3.5 rounded-lg bg-muted/40 border border-border text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                      {msg.message}
+                    {/* CORPO MESSAGGIO: ALTEZZA VARIABILE (V) con 'continua a leggere' se supera 3 righe */}
+                    <div className="p-3.5 rounded-lg bg-muted/40 border border-border text-xs sm:text-sm text-foreground leading-relaxed">
+                      <ExpandableText text={msg.message} className="text-foreground/90 leading-relaxed text-xs sm:text-sm" />
                     </div>
 
                     {/* RIGA INFERIORE / FOOTER: RISPONDI (a sinistra) | CESTINO (a destra) */}
