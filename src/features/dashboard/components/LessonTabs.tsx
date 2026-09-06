@@ -142,8 +142,8 @@ export function LessonTabs({ data }: LessonTabsProps) {
   };
 
   return (
-    <Tabs defaultValue="in-attesa" className="w-full">
-      <div className="flex flex-col md:flex-row gap-6 items-start">
+    <Tabs defaultValue="in-attesa" className="w-full flex flex-col">
+      <div className="flex flex-col md:flex-row gap-6 items-start w-full">
         {/* COLONNA SINISTRA: 4 PULSANTI VERTICALI + AZIONE RAPIDA SLOT */}
         <div className="w-full md:w-64 lg:w-72 shrink-0 space-y-4">
           <div className="p-3 bg-card rounded-xl border border-border shadow-sm space-y-2">
